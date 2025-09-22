@@ -45,13 +45,15 @@ const Navbar: React.FC = () => (
             Log in
           </Button>
         </Link>
-        <Button
-          as="a"
-          href="#"
-          className="bg-gradient-to-r from-emerald-400 to-cyan-500 text-neutral-950"
-        >
-          Register
-        </Button>
+
+        <Link href="/register-login">
+          <Button
+            as="span"
+            className="bg-gradient-to-r from-emerald-400 to-cyan-500 text-neutral-950"
+          >
+            Register
+          </Button>
+        </Link>
       </div>
     </Container>
   </header>

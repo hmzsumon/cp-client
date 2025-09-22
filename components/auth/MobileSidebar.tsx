@@ -30,7 +30,7 @@ export default function MobileSidebar({ open, onClose }: Props) {
 
   return (
     <>
-      {/* Overlay (header-এর নিচ থেকে) */}
+      {/* ── overlay under header ───────────────────────────────── */}
       <div
         className={`fixed inset-x-0 top-16 bottom-0 z-40 bg-black/40 transition-opacity md:hidden ${
           open
@@ -40,23 +40,18 @@ export default function MobileSidebar({ open, onClose }: Props) {
         onClick={onClose}
       />
 
-      {/* Drawer (header-এর নিচ থেকে শুরু) */}
+      {/* ── drawer under header ────────────────────────────────── */}
       <aside
         className={`fixed left-0 top-16 bottom-0 z-50 w-[86%] max-w-[320px] border-r border-neutral-900 bg-neutral-950 transition-transform md:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-hidden={!open}
       >
-        {/* 📌 ব্র্যান্ড-হেডার/ক্লোজ বাটন বাদ (তোমার নির্দেশ অনুযায়ী) */}
-
-        {/* তালিকা (স্ক্রল – স্ক্রলবার হাইড) */}
+        {/* ── scroll area (hidden scrollbar) ───────────────────── */}
         <div className="h-full overflow-y-auto px-2 pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {/* ▶️ User block */}
+          {/* ── user block ──────────────────────────────────────── */}
           <div className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 font-bold text-neutral-950">
-                C
-              </div>
               <div>
                 <div className="text-sm font-semibold text-white">
                   {user.name}
@@ -92,11 +87,12 @@ export default function MobileSidebar({ open, onClose }: Props) {
             </div>
           </div>
 
-          {/* ▶️ Balance accordion */}
+          {/* ── balance accordion ───────────────────────────────── */}
           <div className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900/60">
             <button
               type="button"
               onClick={() => setBalanceOpen((s) => !s)}
+              aria-expanded={balanceOpen}
               className="flex w-full items-center justify-between px-3 py-3 text-sm"
             >
               <span className="flex items-center gap-2 font-medium">
@@ -116,7 +112,7 @@ export default function MobileSidebar({ open, onClose }: Props) {
 
             {balanceOpen && (
               <div className="space-y-3 border-t border-neutral-800 p-3 pt-2">
-                {/* toggle */}
+                {/* ── toggle hide balance ───────────────────────── */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-neutral-300">Hide balance</span>
                   <button
@@ -161,62 +157,82 @@ export default function MobileSidebar({ open, onClose }: Props) {
             )}
           </div>
 
-          {/* ▶️ Main nav groups */}
+          {/* ── main nav groups ────────────────────────────────── */}
           {NAV_ITEMS.filter((i) => i.section !== "bottom").map((i) => {
             const hasChildren = !!i.children?.length;
             const isOpen = !!expand[i.key];
-            return (
-              <div key={i.key}>
-                <button
-                  onClick={() =>
-                    hasChildren
-                      ? setExpand((s) => ({ ...s, [i.key]: !s[i.key] }))
-                      : onClose()
-                  }
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-neutral-900"
-                >
-                  <span className="flex items-center gap-3">
-                    <i.icon className="h-5 w-5" />
-                    {i.label}
-                    {i.badge ? (
-                      <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                        {i.badge === "new" ? "New" : i.badge}
-                      </span>
-                    ) : null}
-                  </span>
-                  {hasChildren ? (
+
+            if (hasChildren) {
+              return (
+                <div key={i.key}>
+                  <button
+                    onClick={() =>
+                      setExpand((s) => ({ ...s, [i.key]: !s[i.key] }))
+                    }
+                    aria-expanded={isOpen}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-neutral-900"
+                  >
+                    <span className="flex items-center gap-3">
+                      <i.icon className="h-5 w-5" />
+                      {i.label}
+                      {i.badge ? (
+                        <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                          {i.badge === "new" ? "New" : i.badge}
+                        </span>
+                      ) : null}
+                    </span>
                     <ChevronDown
                       className={`h-4 w-4 transition ${
                         isOpen ? "rotate-180" : ""
                       }`}
                     />
-                  ) : null}
-                </button>
+                  </button>
 
-                {hasChildren && isOpen && (
-                  <div className="ml-9 space-y-1 py-1">
-                    {i.children!.map((c) => (
-                      <Link
-                        key={c.label}
-                        href={c.href}
-                        onClick={onClose}
-                        className="block rounded-lg px-2 py-1.5 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
-                      >
-                        <span className="block">{c.label}</span>
-                        {c.sublabel ? (
-                          <span className="block text-xs text-neutral-400">
-                            {c.sublabel}
-                          </span>
-                        ) : null}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {isOpen && (
+                    <div className="ml-9 space-y-1 py-1">
+                      {i.children!.map((c) => (
+                        <Link
+                          key={c.label}
+                          href={c.href}
+                          onClick={onClose}
+                          className="block rounded-lg px-2 py-1.5 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
+                        >
+                          <span className="block">{c.label}</span>
+                          {c.sublabel ? (
+                            <span className="block text-xs text-neutral-400">
+                              {c.sublabel}
+                            </span>
+                          ) : null}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // ── leaf items (no children): render as Link so navigation works
+            return (
+              <Link
+                key={i.key}
+                href={i.href || "#"}
+                onClick={onClose}
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-neutral-900"
+              >
+                <span className="flex items-center gap-3">
+                  <i.icon className="h-5 w-5" />
+                  {i.label}
+                  {i.badge ? (
+                    <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                      {i.badge === "new" ? "New" : i.badge}
+                    </span>
+                  ) : null}
+                </span>
+              </Link>
             );
           })}
 
-          {/* invite card */}
+          {/* ── invite card ────────────────────────────────────── */}
           <div className="mt-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3">
             <div className="text-sm font-medium">{INVITE_CARD.title}</div>
             <Link
@@ -228,7 +244,7 @@ export default function MobileSidebar({ open, onClose }: Props) {
             </Link>
           </div>
 
-          {/* bottom section */}
+          {/* ── bottom section ─────────────────────────────────── */}
           <div className="mt-4 space-y-1">
             {NAV_ITEMS.filter((i) => i.section === "bottom").map((i) => (
               <Link
@@ -247,3 +263,9 @@ export default function MobileSidebar({ open, onClose }: Props) {
     </>
   );
 }
+
+/* ── notes ─────────────────────────────────────────────────────
+- Fix: leaf menu items now use <Link>, so routes like "My account" and "Deposit" navigate correctly.
+- All Bangla comments removed; using block-rule comment style only.
+- Minor a11y: added aria-expanded on accordions.
+─────────────────────────────────────────────────────────────── */

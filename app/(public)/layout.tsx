@@ -1,3 +1,5 @@
+import Footer from "@/components/public/Footer";
+import Navbar from "@/components/public/Navbar";
 import React from "react";
 
 const PublicLayout = ({
@@ -6,26 +8,11 @@ const PublicLayout = ({
   children: React.ReactNode;
 }>) => {
   return (
-    <div>
-      <div>
-        {/* <PublicNavbar /> */}
-        <h2>Public Navbar</h2>
-      </div>
-
-      <div className="wrapper flex flex-col h-full pb-10 ">
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-2 hidden md:block ">
-            {/* <SidebarDesktop /> */}
-            <h2>Sidebar</h2>
-          </div>
-          <div className="col-span-2  md:hidden">
-            {/* <SidebarMobile /> */}
-            <h2>Sidebar Mobile</h2>
-          </div>
-          <div className="col-span-12 md:col-span-10">{children}</div>
-        </div>
-      </div>
-    </div>
+    <main className="min-h-screen bg-neutral-950 text-neutral-100">
+      <Navbar />
+      <div>{children}</div>
+      <Footer />
+    </main>
   );
 };
 

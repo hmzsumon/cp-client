@@ -48,6 +48,8 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
   });
 
   const pwd = watch("password", "");
+  const emailValue = watch("email", "");
+
   const pwdStats = useMemo(
     () => ({
       len: pwd.length >= 8 && pwd.length <= 15,
@@ -65,7 +67,13 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
       const res = await registerUser(values).unwrap();
       toast.success("Account created", { id: tId });
       onSuccess?.();
-      router.push("/");
+
+      /* ── redirect to verify page with email ───────────────── */
+      const email =
+        (res?.email as string | undefined)?.toLowerCase?.() ||
+        values.email.trim().toLowerCase();
+      const qp = `email=${encodeURIComponent(email)}`;
+      router.push(`/verify-email?${qp}`);
     } catch (e: any) {
       toast.error(e?.data?.message || "Registration failed", { id: tId });
     }
@@ -98,6 +106,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
           type="email"
           placeholder="you@example.com"
           {...register("email")}
+          autoComplete="email"
         />
       </Field>
 
@@ -108,6 +117,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
             placeholder="••••••••"
             {...register("password")}
             className="pr-9"
+            autoComplete="new-password"
           />
           <button
             type="button"

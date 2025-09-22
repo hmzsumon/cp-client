@@ -1,69 +1,36 @@
 /* ── Capitalise Auth Page (modular) ─────────────────────────────────────────── */
 "use client";
 
-import CapitaliseLogo from "@/components/branding/CapitaliseLogo";
-import GlowBackdrop from "@/components/decor/GlowBackdrop";
-import BackgroundFX from "@/components/reagiter-login/BackgroundFX";
 import RegisterForm from "@/components/reagiter-login/RegisterForm";
 import SignInForm from "@/components/reagiter-login/SignInForm";
 import { TabButton } from "@/components/reagiter-login/Tabs";
-import Link from "next/link";
 import { useState } from "react";
 
 export default function AuthPage(): JSX.Element {
   const [tab, setTab] = useState<"signin" | "create">("signin");
 
   return (
-    <section className="relative bg-neutral-950">
-      <GlowBackdrop variant="max" />
-      <main className="relative min-h-[100dvh] overflow-hidden text-neutral-100">
-        <BackgroundFX />
+    <section className="mx-auto max-w-xl px-4 py-10">
+      <h1 className="mb-6 text-center text-3xl font-extrabold tracking-tight text-white">
+        Welcome to Capitalise
+      </h1>
 
-        <header className="border-b border-neutral-900/60 bg-neutral-950/80 backdrop-blur">
-          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-            <Link href="/" className="flex items-center gap-3">
-              <CapitaliseLogo
-                variant="full"
-                size={28}
-                className="text-white"
-                wordmarkClassName="text-white"
-              />
-            </Link>
-            <div className="text-sm text-neutral-400">
-              <Link href="#">Support</Link>
-            </div>
-          </div>
-        </header>
+      <div className="mb-6 flex justify-center gap-8">
+        <TabButton active={tab === "signin"} onClick={() => setTab("signin")}>
+          Sign in
+        </TabButton>
+        <TabButton active={tab === "create"} onClick={() => setTab("create")}>
+          Create an account
+        </TabButton>
+      </div>
 
-        <section className="mx-auto max-w-xl px-4 py-10">
-          <h1 className="mb-6 text-center text-3xl font-extrabold tracking-tight text-white">
-            Welcome to Capitalise
-          </h1>
-
-          <div className="mb-6 flex justify-center gap-8">
-            <TabButton
-              active={tab === "signin"}
-              onClick={() => setTab("signin")}
-            >
-              Sign in
-            </TabButton>
-            <TabButton
-              active={tab === "create"}
-              onClick={() => setTab("create")}
-            >
-              Create an account
-            </TabButton>
-          </div>
-
-          <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_10px_50px_-20px_rgba(0,0,0,0.6)]">
-            {tab === "signin" ? (
-              <SignInForm onSuccess={() => setTab("signin")} />
-            ) : (
-              <RegisterForm onSuccess={() => setTab("signin")} />
-            )}
-          </div>
-        </section>
-      </main>
+      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_10px_50px_-20px_rgba(0,0,0,0.6)]">
+        {tab === "signin" ? (
+          <SignInForm onSuccess={() => setTab("signin")} />
+        ) : (
+          <RegisterForm onSuccess={() => setTab("signin")} />
+        )}
+      </div>
     </section>
   );
 }

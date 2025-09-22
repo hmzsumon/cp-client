@@ -49,12 +49,15 @@ export const authApi = apiSlice.injectEndpoints({
     }),
 
     // verify email
-    verifyEmail: builder.mutation<any, any>({
+    // ── authApi: verify email mutation ────────────────────────────
+    verifyEmail: builder.mutation<
+      { success: boolean; message: string },
+      { email: string; code: string }
+    >({
       query: (body) => ({
         url: "/verify-email",
         method: "POST",
         body,
-        delay: 30000,
       }),
       invalidatesTags: ["User"],
     }),
