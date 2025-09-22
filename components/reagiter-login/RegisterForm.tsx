@@ -69,9 +69,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
       onSuccess?.();
 
       /* ── redirect to verify page with email ───────────────── */
-      const email =
-        (res?.email as string | undefined)?.toLowerCase?.() ||
-        values.email.trim().toLowerCase();
+      const email = values.email.trim().toLowerCase();
       const qp = `email=${encodeURIComponent(email)}`;
       router.push(`/verify-email?${qp}`);
     } catch (e: any) {
