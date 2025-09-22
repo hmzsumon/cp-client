@@ -12,15 +12,11 @@ import {
 import storage from "redux-persist/lib/storage";
 
 import depositMethodReducer from "./depositMethodSlice";
+import accountUIReducer from "./features/account/accountUISlice";
 import { apiSlice } from "./features/api/apiSlice";
 import authReducer from "./features/auth/authSlice";
-import crazyLionSlice from "./features/crazy-lion/crazyLionSlice";
-import fruitLoopsReducer from "./features/fruit-loops/fruitLoopsSlice";
-import luckyTimeReducer from "./features/lucky-time/luckyTimeSlice";
-import luckyWheelReducer from "./features/lucky-wheel/luckyWheelSlice";
-import miningReducer from "./features/mining/miningSlice";
-import tradeReducer from "./features/trade/tradeSlice";
 import sidebarReducer from "./features/ui/sidebarSlice";
+import uiReducer from "./features/ui/uiSlice";
 import walletReducer from "./features/wallet/walletSlice";
 import resetPassSlice from "./resetPassSlice";
 import signUpData from "./signupDataSlice";
@@ -30,25 +26,21 @@ import verificationSlice from "./verificationSlice";
 const persistConfig = {
   key: "root",
   storage: storage,
-  whitelist: ["auth", "trade", "resetPass"],
+  whitelist: ["auth", "trade", "resetPass", "accountUI"],
 };
 
 export const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
   auth: authReducer,
-  mining: miningReducer,
   depositMethod: depositMethodReducer,
   signUpData,
   stepper: stepperSlice,
   resetPass: resetPassSlice,
   verification: verificationSlice,
-  trade: tradeReducer,
   sidebar: sidebarReducer,
-  luckyWheel: luckyWheelReducer,
-  fruitLoops: fruitLoopsReducer,
-  luckyTime: luckyTimeReducer,
-  crazyLion: crazyLionSlice,
   wallet: walletReducer,
+  ui: uiReducer,
+  accountUI: accountUIReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -92,7 +92,7 @@ export const authApi = apiSlice.injectEndpoints({
       },
     }),
 
-    // logout user
+    /* ────────── logout user ────────── */
     logoutUser: builder.mutation({
       query: () => ({
         url: `/logout`,

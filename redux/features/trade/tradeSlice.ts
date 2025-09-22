@@ -1,87 +1,82 @@
-import { createSlice } from '@reduxjs/toolkit';
+/* ──────────────────────────────────────────────────────────────────────────
+   tradeSlice — selected symbol, timeframe, in-memory quotes (demo feed)
+────────────────────────────────────────────────────────────────────────── */
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface TradeState {
-	symbol: string;
-	isTradeDrawerOpen: boolean;
-	currentRound: any | null;
-	predict?: string;
-	tradeDuration: string;
-	tradeLoading?: boolean;
-	kline?: boolean;
-	currentRounds: {
-		[key: string]: {
-			[symbol: string]: any;
-		};
-	};
-}
+export type Timeframe = "1m" | "3m" | "5m" | "10m" | "15m" | "1h" | "2h";
 
-const initialState: TradeState = {
-	symbol: 'BTCUSDT',
-	isTradeDrawerOpen: false,
-	currentRound: null,
-	predict: undefined,
-	tradeDuration: '3m',
-	tradeLoading: true,
-	kline: true,
-	currentRounds: {
-		'1m': {},
-		'3m': {},
-		'5m': {},
-		'15m': {},
-		'30m': {},
-	},
+export type Quote = {
+  symbol: string;
+  bid: number;
+  ask: number;
+  ts: number;
 };
 
-export const tradeSlice = createSlice({
-	name: 'trade',
-	initialState,
-	reducers: {
-		setSymbol: (state, action) => {
-			state.symbol = action.payload;
-		},
-		setTradeDrawerOpen: (state, action) => {
-			state.isTradeDrawerOpen = action.payload;
-		},
-		setCurrentRound: (state, action) => {
-			state.currentRound = action.payload;
-		},
-		setPredict: (state, action) => {
-			state.predict = action.payload;
-		},
-		setTradeDuration: (state, action) => {
-			state.tradeDuration = action.payload;
-		},
-		setTradeLoading: (state, action) => {
-			state.tradeLoading = action.payload;
-		},
-		setKline: (state) => {
-			state.kline = !state.kline;
-		},
+export type Instrument = {
+  symbol: string; // "XAUUSD"
+  name: string; // "Gold vs US Dollar"
+  category:
+    | "Majors"
+    | "Metals"
+    | "Crypto"
+    | "Indices"
+    | "Stocks"
+    | "Most"
+    | "Favorites";
+  decimals: number; // 3 for XAUUSD, 5 for EURUSD etc
+  minVol: number; // 0.01
+  stepVol: number; // 0.01
+  pipValue: number; // UI info only
+};
 
-		// ✅ NEW: Update by timePeriod + symbol
-		setCurrentRoundByTimeAndSymbol: (state, action) => {
-			const { timePeriod, symbol, round } = action.payload;
+type TradeState = {
+  symbol: string;
+  tf: Timeframe;
+  quote?: Quote;
+  drawerOpen: boolean;
+  ticketOpen: boolean;
+  volume: number;
+};
 
-			if (!state.currentRounds) state.currentRounds = {};
+const initial: TradeState = {
+  symbol: "XAUUSD",
+  tf: "5m",
+  drawerOpen: false,
+  ticketOpen: false,
+  volume: 0.01,
+};
 
-			if (!state.currentRounds[timePeriod]) {
-				state.currentRounds[timePeriod] = {};
-			}
-
-			state.currentRounds[timePeriod][symbol] = round;
-		},
-	},
+const tradeSlice = createSlice({
+  name: "trade",
+  initialState: initial,
+  reducers: {
+    setSymbol(s, a: PayloadAction<string>) {
+      s.symbol = a.payload;
+    },
+    setTimeframe(s, a: PayloadAction<Timeframe>) {
+      s.tf = a.payload;
+    },
+    setQuote(s, a: PayloadAction<Quote>) {
+      if (a.payload.symbol === s.symbol) s.quote = a.payload;
+    },
+    setDrawerOpen(s, a: PayloadAction<boolean>) {
+      s.drawerOpen = a.payload;
+    },
+    setTicketOpen(s, a: PayloadAction<boolean>) {
+      s.ticketOpen = a.payload;
+    },
+    setVolume(s, a: PayloadAction<number>) {
+      s.volume = a.payload;
+    },
+  },
 });
 
 export const {
-	setSymbol,
-	setTradeDrawerOpen,
-	setCurrentRound,
-	setPredict,
-	setTradeDuration,
-	setTradeLoading,
-	setKline,
-	setCurrentRoundByTimeAndSymbol, // export new action
+  setSymbol,
+  setTimeframe,
+  setQuote,
+  setDrawerOpen,
+  setTicketOpen,
+  setVolume,
 } = tradeSlice.actions;
-
 export default tradeSlice.reducer;
