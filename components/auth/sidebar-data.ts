@@ -2,12 +2,10 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Clock4,
-  Copy,
   Download,
   Grid2x2,
   HelpCircle,
   LifeBuoy,
-  LineChart,
   MessageSquare,
   Settings,
   SquareGanttChart,
@@ -32,13 +30,13 @@ export const NAV_ITEMS: NavItem[] = [
     key: "deposit",
     label: "Deposit",
     icon: Download,
-    href: "/dashboard/deposit",
+    href: "/deposit",
   },
   {
     key: "withdrawal",
     label: "Withdrawal",
     icon: Upload,
-    href: "/dashboard/withdrawal",
+    href: "/withdrawal",
   },
   {
     key: "history",
@@ -52,23 +50,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Wallet,
     href: "/dashboard/wallet",
   },
-
-  {
-    key: "analytics",
-    label: "Analytics",
-    icon: LineChart,
-    children: [
-      { label: "Analyst Views", href: "/dashboard/analytics/analyst-views" },
-      { label: "Market News", href: "/dashboard/analytics/market-news" },
-      {
-        label: "Economic Calendar",
-        sublabel: "Track major global events",
-        href: "/dashboard/analytics/economic-calendar",
-      },
-    ],
-  },
-
-  { key: "copy", label: "Copy Trading", icon: Copy, href: "/dashboard/copy" },
 
   {
     key: "support",

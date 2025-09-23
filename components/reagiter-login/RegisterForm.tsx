@@ -4,13 +4,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, ChevronDown, Eye, EyeOff, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+/* ── api & ui deps ─────────────────────────────────────────── */
 import { useRegisterUserMutation } from "@/redux/features/auth/authApi";
-import { Button, Field, Input, Select } from "./UI";
-import { countries, registerSchema, type RegisterValues } from "./schemas";
+import { Button, Field, Input } from "./UI";
 
+/* ── schema/types (with name/phone/confirmPassword) ───────── */
+import { registerSchema, type RegisterValues } from "./schemas";
+
+/* ── country + phone components (themed) ──────────────────── */
+import CountrySelectPro, { iso2FromCountryName } from "./CountrySelectPro";
+import PhoneInput from "./PhoneInput";
+
+/* ── tiny rule badge ───────────────────────────────────────── */
 const Rule: React.FC<{ ok: boolean; children: React.ReactNode }> = ({
   ok,
   children,
@@ -25,30 +33,39 @@ const Rule: React.FC<{ ok: boolean; children: React.ReactNode }> = ({
   </div>
 );
 
+/* ── component ─────────────────────────────────────────────── */
 const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
   const router = useRouter();
   const [registerUser, { isLoading }] = useRegisterUserMutation();
-  const [show, setShow] = useState(false);
+
+  const [showPwd, setShowPwd] = useState(false);
+  const [showCPwd, setShowCPwd] = useState(false);
 
   const {
     register,
+    control,
     watch,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     mode: "onTouched",
     defaultValues: {
+      name: "",
       country: "",
+      phone: "",
       email: "",
       password: "",
+      confirmPassword: "",
       partnerCode: "",
       notUSTaxPayer: false,
     },
   });
 
+  /* ── live stats for password helper ──────────────────────── */
   const pwd = watch("password", "");
-  const emailValue = watch("email", "");
+  const countryValue = watch("country");
 
   const pwdStats = useMemo(
     () => ({
@@ -61,17 +78,17 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
     [pwd]
   );
 
+  /* ── submit ──────────────────────────────────────────────── */
   const submit = handleSubmit(async (values) => {
     const tId = toast.loading("Creating account...");
     try {
-      const res = await registerUser(values).unwrap();
+      await registerUser(values).unwrap();
       toast.success("Account created", { id: tId });
       onSuccess?.();
 
-      /* ── redirect to verify page with email ───────────────── */
+      // ── redirect to verify page with email ─────────────────
       const email = values.email.trim().toLowerCase();
-      const qp = `email=${encodeURIComponent(email)}`;
-      router.push(`/verify-email?${qp}`);
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (e: any) {
       toast.error(e?.data?.message || "Registration failed", { id: tId });
     }
@@ -79,26 +96,47 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
 
   return (
     <form onSubmit={submit} className="space-y-4">
+      {/* ── name ────────────────────────────────────────────── */}
+      <Field label="Full name" error={errors.name?.message}>
+        <Input
+          type="text"
+          placeholder="John Doe"
+          {...register("name")}
+          autoComplete="name"
+        />
+      </Field>
+
+      {/* ── country (smart combobox: flag + search) ─────────── */}
       <Field
         label="Country / Region of residence"
         error={errors.country?.message}
       >
-        <div className="relative">
-          <Select {...register("country")}>
-            <option value="">Select country</option>
-            {countries.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </Select>
-          <ChevronDown
-            size={16}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400"
-          />
-        </div>
+        <CountrySelectPro
+          value={countryValue}
+          onChange={(val) => setValue("country", val, { shouldValidate: true })}
+          placeholder="Select country"
+        />
       </Field>
 
+      {/* ── phone with flag + dial code (linked to country) ─── */}
+      <Field
+        label="Phone number (with country code)"
+        error={errors.phone?.message}
+      >
+        <Controller
+          control={control}
+          name="phone"
+          render={({ field }) => (
+            <PhoneInput
+              value={field.value}
+              onChange={field.onChange}
+              country={iso2FromCountryName(countryValue)}
+            />
+          )}
+        />
+      </Field>
+
+      {/* ── email ───────────────────────────────────────────── */}
       <Field label="Your email address" error={errors.email?.message}>
         <Input
           type="email"
@@ -108,10 +146,11 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         />
       </Field>
 
+      {/* ── password ────────────────────────────────────────── */}
       <Field label="Password" error={errors.password?.message}>
         <div className="relative">
           <Input
-            type={show ? "text" : "password"}
+            type={showPwd ? "text" : "password"}
             placeholder="••••••••"
             {...register("password")}
             className="pr-9"
@@ -120,14 +159,16 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
           <button
             type="button"
             aria-label="Toggle password"
-            onClick={() => setShow((s) => !s)}
+            onClick={() => setShowPwd((s) => !s)}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-200"
           >
-            {show ? <EyeOff size={16} /> : <Eye size={16} />}
+            {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+
+        {/* ── password rules ─────────────────────────────────── */}
         <div className="mt-2 space-y-1">
-          <Rule ok={pwdStats.len}>Between 8-15 characters</Rule>
+          <Rule ok={pwdStats.len}>Between 8–15 characters</Rule>
           <Rule ok={pwdStats.upper && pwdStats.lower}>
             At least one upper and one lower case letter
           </Rule>
@@ -136,6 +177,28 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         </div>
       </Field>
 
+      {/* ── confirm password ────────────────────────────────── */}
+      <Field label="Confirm password" error={errors.confirmPassword?.message}>
+        <div className="relative">
+          <Input
+            type={showCPwd ? "text" : "password"}
+            placeholder="••••••••"
+            {...register("confirmPassword")}
+            className="pr-9"
+            autoComplete="new-password"
+          />
+          <button
+            type="button"
+            aria-label="Toggle confirm password"
+            onClick={() => setShowCPwd((s) => !s)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-200"
+          >
+            {showCPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+      </Field>
+
+      {/* ── partner code (optional) ─────────────────────────── */}
       <details className="rounded-lg border border-neutral-800 p-3 open:bg-neutral-900/40">
         <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-neutral-200">
           <span>Partner code (optional)</span>
@@ -149,6 +212,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         </div>
       </details>
 
+      {/* ── declaration ─────────────────────────────────────── */}
       <label className="flex items-start gap-3 text-sm text-neutral-300">
         <input
           type="checkbox"
@@ -166,6 +230,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         </p>
       ) : null}
 
+      {/* ── submit ──────────────────────────────────────────── */}
       <Button type="submit" disabled={isLoading} className="w-full">
         {isLoading ? "Creating..." : "Create account"}
       </Button>

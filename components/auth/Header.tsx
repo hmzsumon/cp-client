@@ -1,5 +1,6 @@
 "use client";
 
+import { formatBalance } from "@/lib/functions";
 import {
   Bell,
   ChevronDown,
@@ -9,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import CapitaliseLogo from "../branding/CapitaliseLogo";
 import BalanceMenu from "./BalanceMenu";
 import NotificationDrawer from "./NotificationDrawer";
@@ -24,6 +26,8 @@ export default function Header({ open, onToggle }: Props) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [balanceOpen, setBalanceOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+
+  const { user } = useSelector((state: any) => state.auth);
 
   // ESC দিয়ে যে কোনো ওভারলে/পপওভার বন্ধ
   useEffect(() => {
@@ -99,7 +103,10 @@ export default function Header({ open, onToggle }: Props) {
               }`}
             >
               <Wallet size={18} />
-              <span className="font-semibold">0.00</span>
+              <span className="font-semibold">
+                {formatBalance(user?.m_balance ? user.m_balance : 0)}
+                {}
+              </span>
               <span className="text-neutral-400">USD</span>
               <ChevronDown size={14} className="text-neutral-400" />
             </button>

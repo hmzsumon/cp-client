@@ -1,10 +1,12 @@
 "use client";
 
-import { Copy } from "lucide-react";
+import { formatBalance } from "@/lib/functions";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 
 export default function BalanceMenu({ open }: { open: boolean }) {
   const [hide, setHide] = useState(false);
+  const { user } = useSelector((state: any) => state.auth);
   return (
     <div
       className={`absolute right-0 mt-2 w-80 rounded-xl border border-neutral-800 bg-neutral-950/95 p-3 shadow-xl transition-all ${
@@ -32,18 +34,8 @@ export default function BalanceMenu({ open }: { open: boolean }) {
 
       <div className="mt-3 rounded-lg bg-neutral-900/60 p-3">
         <div className="text-lg font-bold text-white">
-          {hide ? "••••••" : "0.00"}{" "}
+          {hide ? "••••••" : formatBalance(user?.m_balance || 0)}{" "}
           <span className="text-sm text-neutral-400">USD</span>
-        </div>
-        <div className="mt-1 text-xs text-neutral-400">Investment wallet</div>
-        <div className="mt-1 flex items-center gap-2 text-xs text-neutral-400">
-          #1182934804799179326
-          <button
-            className="rounded p-1 hover:bg-neutral-800"
-            aria-label="Copy"
-          >
-            <Copy size={14} />
-          </button>
         </div>
       </div>
     </div>

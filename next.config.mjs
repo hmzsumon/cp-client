@@ -1,7 +1,9 @@
-// next.config.js
+// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+
+  // ── keep your Sass & rewrites ──────────────────────────────
   sassOptions: {
     additionalData: `$var: red;`,
   },
@@ -13,6 +15,30 @@ const nextConfig = {
           "https://cpfx-api-01d22e6d8bdf.herokuapp.com/api/v1/:path*",
       },
     ];
+  },
+
+  // ── enable SVGR so .svg can be imported as React components ─
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.svg$/i,
+      issuer: /\.[jt]sx?$/,
+      use: [
+        {
+          loader: "@svgr/webpack",
+          options: {
+            icon: true,
+            svgo: true,
+            svgoConfig: {
+              plugins: [
+                // remove hard-coded fill/stroke so color can be controlled via CSS currentColor
+                { name: "removeAttrs", params: { attrs: "(fill|stroke)" } },
+              ],
+            },
+          },
+        },
+      ],
+    });
+    return config;
   },
 };
 

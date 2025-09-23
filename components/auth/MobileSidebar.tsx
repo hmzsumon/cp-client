@@ -1,8 +1,14 @@
 "use client";
 
+import { formatBalance } from "@/lib/functions";
+import { getErrorMessage } from "@/lib/getErrorMessage";
+import { useLogoutUserMutation } from "@/redux/features/auth/authApi";
 import { ChevronDown, Copy } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 import { INVITE_CARD, NAV_ITEMS } from "./sidebar-data";
 
 type Props = { open: boolean; onClose: () => void };
@@ -12,19 +18,25 @@ export default function MobileSidebar({ open, onClose }: Props) {
   const [balanceOpen, setBalanceOpen] = useState(false);
   const [hideBalance, setHideBalance] = useState(false);
 
-  // demo user/wallet
-  const user = useMemo(
-    () => ({ name: "H M ZAKARIA", email: "h****2@gmail.com" }),
-    []
-  );
-  const wallet = useMemo(
-    () => ({ id: "1182934804799179326", currency: "USD", amount: 0 }),
-    []
-  );
+  const router = useRouter();
+  const [logoutUser, { isLoading }] = useLogoutUserMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser(undefined).unwrap();
+      toast.success("Logout successfully");
+
+      router.push("/");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const { user } = useSelector((state: any) => state.auth);
 
   const copyId = async () => {
     try {
-      await navigator.clipboard.writeText(wallet.id);
+      await navigator.clipboard.writeText(user?.customerId || "");
     } catch {}
   };
 
@@ -54,9 +66,9 @@ export default function MobileSidebar({ open, onClose }: Props) {
             <div className="flex items-center gap-3">
               <div>
                 <div className="text-sm font-semibold text-white">
-                  {user.name}
+                  {user?.name}
                 </div>
-                <div className="text-xs text-neutral-400">{user.email}</div>
+                <div className="text-xs text-neutral-400">{user?.email}</div>
               </div>
             </div>
 
@@ -81,6 +93,7 @@ export default function MobileSidebar({ open, onClose }: Props) {
               <button
                 type="button"
                 className="block w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-neutral-900"
+                onClick={handleLogout}
               >
                 Sign Out
               </button>
@@ -99,7 +112,7 @@ export default function MobileSidebar({ open, onClose }: Props) {
                 <span className="inline-flex items-center rounded-md px-2 py-1 ring-1 ring-neutral-800">
                   {hideBalance
                     ? "••••"
-                    : `${wallet.amount.toFixed(2)} ${wallet.currency}`}
+                    : `${formatBalance(user?.m_balance || 0)} USDT`}
                 </span>
                 <span className="text-neutral-400">Balance</span>
               </span>
@@ -135,7 +148,7 @@ export default function MobileSidebar({ open, onClose }: Props) {
                   <div className="text-lg font-semibold text-white">
                     {hideBalance
                       ? "••••"
-                      : `${wallet.amount.toFixed(2)} ${wallet.currency}`}
+                      : `${formatBalance(user?.m_balance || 0)} USDT`}
                   </div>
                   <div className="text-xs text-neutral-400">
                     Investment wallet
@@ -143,7 +156,9 @@ export default function MobileSidebar({ open, onClose }: Props) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <code className="text-xs text-neutral-300">#{wallet.id}</code>
+                  <code className="text-xs text-neutral-300">
+                    {user?.customerId}
+                  </code>
                   <button
                     type="button"
                     onClick={copyId}

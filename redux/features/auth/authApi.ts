@@ -306,6 +306,15 @@ export const authApi = apiSlice.injectEndpoints({
         method: "GET",
       }),
     }),
+
+    // verify otp for forgot password
+    verifyOtpForForgotPassword: builder.mutation<any, any>({
+      query: (body) => ({
+        url: "/get-verify-otp-for-forgot-password",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -343,4 +352,6 @@ export const {
   useLazyCheckUserByCustomIdQuery,
   useAddUserPaymentMethodMutation,
   useGetUserPaymentMethodsQuery,
+
+  useVerifyOtpForForgotPasswordMutation,
 } = authApi;

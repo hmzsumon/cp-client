@@ -1,262 +1,541 @@
-/* ── Page: Withdraw ─────────────────────────────────────────────────────── */
 "use client";
-import TurnoverNotice from "@/components/withdraw/TurnoverNotice";
-import WithdrawForm from "@/components/withdraw/WithdrawForm";
+
+import {
+  useResendVerificationEmailMutation,
+  useVerifyOtpForForgotPasswordMutation,
+} from "@/redux/features/auth/authApi";
+import { useCreateWithdrawRequestMutation } from "@/redux/features/withdraw/withdrawApi";
 import { fetchBaseQueryError } from "@/redux/services/helpers";
-import Image from "next/image";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import {
+  FiAlertCircle,
+  FiArrowLeft,
+  FiCheck,
+  FiClock,
+  FiInfo,
+  FiMail,
+} from "react-icons/fi";
 import { useSelector } from "react-redux";
 
-import RecallBalanceBtn from "@/components/withdraw/RecallBalanceBtn";
-import { BoundWallet } from "@/components/withdraw/WalletCard";
-import WalletCarousel from "@/components/withdraw/WalletCarousel";
-import WalletTabs, { WalletProvider } from "@/components/withdraw/WalletTabs";
-import { useGetUserPaymentMethodsQuery } from "@/redux/features/auth/authApi";
-import { useCreateWithdrawRequestMutation } from "@/redux/features/withdraw/withdrawApi";
-import { useRouter } from "next/navigation";
+/* ── UI helpers ───────────────────────────────────────────── */
+const StatPill = ({ children }: { children: React.ReactNode }) => (
+  <span className="rounded-full border border-emerald-700/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+    {children}
+  </span>
+);
 
-/* ── Helpers ────────────────────────────────────────────────────────────── */
-const formatBDT = (n: number) =>
-  `৳ ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-
-/* ── Component ─────────────────────────────────────────────────────────── */
 export default function WithdrawPage() {
-  const router = useRouter();
-  const { user } = useSelector((s: any) => s.auth) || { user: null };
+  const { user } = useSelector((state: any) => state.auth);
 
-  const { data, isLoading } = useGetUserPaymentMethodsQuery(undefined);
-  const apiList: Array<{
-    _id: string;
-    method: WalletProvider;
-    name?: string;
-    accountNumber?: string;
-    number?: string;
-    wallet?: string;
-    createdAt?: string;
-    isDefault?: boolean;
-  }> = data?.userPaymentMethods ?? [];
-
-  const getAccount = (pm: any) =>
-    pm.accountNumber || pm.number || pm.wallet || "";
-
-  const wallets: BoundWallet[] = apiList.map((pm) => ({
-    id: pm._id,
-    provider: pm.method,
-    accountNumber: getAccount(pm),
-    holderName: pm.name,
-    last4: getAccount(pm).slice(-4) || "****",
-    createdAt: (pm.createdAt ?? new Date().toISOString()).slice(0, 10),
-    isDefault: pm.isDefault,
-  }));
-
-  const [provider, setProvider] = useState<WalletProvider>("bkash");
-
-  // filter wallets for active tab
-  const providerWallets = useMemo(
-    () => wallets.filter((w) => w.provider === provider),
-    [wallets, provider]
-  );
-
-  // selection state: if exactly one wallet => autoselect; else keep last selection per tab
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  useEffect(() => {
-    if (providerWallets.length === 1) setSelectedId(providerWallets[0].id);
-    else if (
-      providerWallets.length > 1 &&
-      !providerWallets.some((w) => w.id === selectedId)
-    ) {
-      setSelectedId(providerWallets[0].id);
-    } else if (providerWallets.length === 0) {
-      setSelectedId(null);
-    }
-  }, [providerWallets, selectedId]);
-
-  // tab counts badge
-  const counts = useMemo(() => {
-    return {
-      bkash: wallets.filter((w) => w.provider === "bkash").length,
-      nagad: wallets.filter((w) => w.provider === "nagad").length,
-    } as Partial<Record<WalletProvider, number>>;
-  }, [wallets]);
-
-  const mainBalance = Number(user?.m_balance ?? 0);
-  const available = Number(user?.available_amount ?? mainBalance);
-  const remainingTurnover = Number(user?.bet_volume ?? 0);
-
+  /* ── withdraw create ────────────────────────────────────── */
   const [
     createWithdrawRequest,
-    { isLoading: isSubmitting, error: createError, isSuccess, isError },
+    {
+      isLoading: isCreateLoading,
+      isError: isCreateError,
+      isSuccess: isCreateSuccess,
+      error: createApiError,
+    },
   ] = useCreateWithdrawRequestMutation();
 
-  const handleRecall = () => {
-    // TODO: call recall API
-    console.log("recall balance");
+  /* ── OTP verify (withdrawal গেটের মতো ব্যবহার) ───────────── */
+  const [
+    verifyOtpForForgotPassword,
+    {
+      isLoading: isVerifyLoading,
+      isError: isVerifyError,
+      isSuccess: isVerifySuccess,
+      error: verifyApiError,
+    },
+  ] = useVerifyOtpForForgotPasswordMutation();
+
+  /* ── resend OTP ─────────────────────────────────────────── */
+  const [
+    resendVerificationEmail,
+    {
+      isLoading: isResendLoading,
+      isError: isResendError,
+      isSuccess: isResendSuccess,
+      error: resendApiError,
+    },
+  ] = useResendVerificationEmailMutation();
+
+  /* ── local states ───────────────────────────────────────── */
+  const [amount, setAmount] = useState<string>("");
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [network, setNetwork] = useState<"TRC20" | "BEP20">("TRC20");
+  const [otp, setOtp] = useState<string>("");
+  const [step, setStep] = useState<"form" | "verify">("form");
+  const [amountError, setAmountError] = useState<string>("");
+
+  /* ── constants / derived ────────────────────────────────── */
+  const minWithdraw = 30;
+  const feeRate = 0.05;
+  const availableBalance = useMemo(
+    () => Math.max(0, (user?.m_balance || 0) - 3),
+    [user?.m_balance]
+  );
+
+  const withdrawFee = useMemo(() => {
+    const n = parseFloat(amount || "0");
+    return isNaN(n) ? 0 : +(n * feeRate).toFixed(2);
+  }, [amount]);
+
+  const actualReceipt = useMemo(() => {
+    const n = parseFloat(amount || "0");
+    return isNaN(n) ? 0 : +(n - n * feeRate).toFixed(2);
+  }, [amount]);
+
+  /* ── handlers ───────────────────────────────────────────── */
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    const parsed = parseFloat(value);
+
+    if (!value) return setAmountError("");
+    if (isNaN(parsed) || parsed <= 0)
+      return setAmountError("Enter a valid amount");
+    if (parsed < minWithdraw)
+      return setAmountError(`Minimum withdrawal amount is ${minWithdraw} USDT`);
+    if (parsed > availableBalance)
+      return setAmountError("Amount exceeds available balance");
+
+    setAmountError("");
   };
 
-  const selectedWallet =
-    providerWallets.find((w) => w.id === selectedId) || null;
-
-  const handleSubmit = async (amt: number, pass: string) => {
-    if (!selectedWallet) {
-      toast.error("Select an E-wallet");
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || !!amountError) {
+      toast.error(amountError || `Enter amount (min $${minWithdraw})`);
       return;
     }
-    const payload = {
-      amount: amt,
-      method: {
-        name: selectedWallet.provider,
-        accountNumber: selectedWallet.accountNumber,
-      },
-      pass,
-    };
-
-    console.log("withdraw payload:", payload);
-
-    await createWithdrawRequest(payload).unwrap();
+    if (!walletAddress) {
+      toast.error("Please enter your wallet address");
+      return;
+    }
+    if (user?.is_withdraw_block) {
+      toast.error("You must complete at least 9 tasks to withdraw");
+      return;
+    }
+    // ── send OTP to email
+    resendVerificationEmail({ email: user?.email });
   };
 
-  /* ────────── useEffect for deposit ────────── */
+  const handleVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length < 6) {
+      toast.error("Please enter the 6-digit OTP code");
+      return;
+    }
+    verifyOtpForForgotPassword({ email: user?.email, otp }).unwrap();
+  };
 
+  const handleRequestWithdraw = () => {
+    const payload = {
+      amount: parseFloat(amount),
+      withdrawAddress: walletAddress,
+      network,
+      withdrawFee,
+      receiptAmount: actualReceipt,
+    };
+    createWithdrawRequest(payload).unwrap();
+  };
+
+  /* ── effects: resend OTP result ─────────────────────────── */
   useEffect(() => {
-    if (isError) {
-      toast.error((createError as fetchBaseQueryError).data?.error);
+    if (isResendError) {
+      const msg =
+        (resendApiError as fetchBaseQueryError)?.data?.error ||
+        "Failed to send OTP";
+      toast.error(msg);
+    } else if (isResendSuccess) {
+      toast.success("OTP sent! Check your email.");
+      setStep("verify");
     }
-    if (isSuccess) {
-      toast.success("Deposit created successfully!");
-      router.push("/dashboard");
+  }, [isResendError, isResendSuccess, resendApiError]);
+
+  /* ── effects: verify OTP result ─────────────────────────── */
+  useEffect(() => {
+    if (isVerifyError) {
+      const msg =
+        (verifyApiError as fetchBaseQueryError)?.data?.error ||
+        "OTP verification failed";
+      toast.error(msg);
+    } else if (isVerifySuccess) {
+      handleRequestWithdraw();
+      setOtp("");
+      setStep("form");
     }
-  }, [isError, isSuccess, createError]);
+  }, [isVerifyError, isVerifySuccess, verifyApiError]);
+
+  /* ── effects: create withdraw result ────────────────────── */
+  useEffect(() => {
+    if (isCreateError) {
+      const msg =
+        (createApiError as fetchBaseQueryError)?.data?.error ||
+        "Unable to create request";
+      toast.error(msg);
+    } else if (isCreateSuccess) {
+      toast.success("Withdrawal request created successfully!");
+      setAmount("");
+      setWalletAddress("");
+      setOtp("");
+      setStep("form");
+    }
+  }, [isCreateError, isCreateSuccess, createApiError]);
 
   return (
-    <div className="min-h-screen bg-[#01241D] text-white">
-      {/* Topbar */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 bg-[#0f4d3f] px-4 py-3 text-yellow-300">
-        <Link
-          href="/dashboard"
-          className="rounded p-1 hover:bg-black/10"
-          aria-label="Back"
-        >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            className="fill-current"
-          >
-            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-          </svg>
-        </Link>
-        <h1 className="text-lg font-semibold">Withdrawal</h1>
-      </div>
-
-      <div className="mx-auto w-full max-w-md px-4 py-5">
-        {/* Tabs */}
-        <WalletTabs value={provider} onChange={setProvider} counts={counts} />
-
-        {/* Bound wallets header */}
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm">
-            {providerWallets.length > 0
-              ? `Registered E-wallet (${providerWallets.length}/5)`
-              : "Registered E-wallet (0/5)"}
-          </p>
-
-          <Link
-            href="/withdraw/bind-wallet"
-            className="rounded-full bg-red-600 p-2 hover:bg-red-700"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              className="fill-white"
-            >
-              <path d="M19 11H13V5h-2v6H5v2h6v6h2v-6h6z" />
-            </svg>
-          </Link>
-        </div>
-
-        {/* Cards / Slider */}
-        <div className="mt-3">
-          {isLoading ? (
-            <div className="h-28 animate-pulse rounded-xl bg-white/10" />
-          ) : providerWallets.length ? (
-            <WalletCarousel
-              items={providerWallets}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#00493B] bg-[#031A15] p-8 text-center">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                className="mb-3 fill-white opacity-60"
-              >
-                <path d="M21 7H7V5c0-1.1.9-2 2-2h12v4zM3 7h2v12h14c1.1 0 2-.9 2-2v-7H7c-1.1 0-2 .9-2 2v5H3V7z" />
-              </svg>
-              <p className="text-white/70">Empty E-Wallet</p>
+    <div className="min-h-screen bg-neutral-950 px-3 py-5 md:px-6 md:py-8">
+      <motion.div
+        initial={{ y: 14, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="mx-auto w-full max-w-2xl"
+      >
+        {/* ── card ──────────────────────────────────────────── */}
+        <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 ring-1 ring-emerald-800/10">
+          {/* ── header ─────────────────────────────────────── */}
+          {/* ── header (responsive pills) ───────────────────────────── */}
+          <div className="relative border-b border-neutral-800 bg-gradient-to-r from-emerald-600 to-cyan-600 p-4 text-neutral-950">
+            {/* top row: back + title (mobile: stacked) */}
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Link
-                href="/withdraw/bind-wallet"
-                className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm hover:bg-emerald-500"
+                href="/asset"
+                className="inline-flex items-center self-start rounded-lg bg-black/10 px-3 py-1.5 text-sm font-medium text-white/90 hover:bg-black/20"
               >
-                Bind E-wallet
+                <FiArrowLeft className="mr-2" /> Back
               </Link>
+
+              {/* title: center on mobile, pill-look */}
+              <h1 className="mx-auto rounded-xl bg-white/20 px-4 py-1 text-center text-base font-extrabold tracking-wide text-white shadow-sm sm:mx-0 sm:text-lg">
+                Withdraw USDT
+              </h1>
+
+              {/* spacer for symmetry on desktop */}
+              <div className="hidden w-[88px] sm:block" />
             </div>
-          )}
-        </div>
 
-        {/* Info + recall */}
-        <div className="mt-5 rounded-xl border border-[#00493B] bg-[#031A15] p-4 text-sm">
-          <div className="grid gap-1 text-white/80">
-            <div>
-              Withdrawal time: <span className="opacity-80">24 hours</span>
-            </div>
-            <div className="opacity-80">Tips: উত্তোলনের সময়সীমা: ২৪ ঘন্টা</div>
-            <div className="mt-2">
-              Daily withdrawal 99 (Times), Remaining withdrawal 99 (Times)
-            </div>
-            <div>Main Wallet: {formatBDT(mainBalance)}</div>
-            <div>Available Amount: {formatBDT(available)}</div>
-          </div>
-          <div className="mt-3">
-            <RecallBalanceBtn onClick={handleRecall} />
-          </div>
-        </div>
+            {/* pills row: mobile -> grid 2 cols, desktop -> inline */}
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
+              {/* pill */}
+              <span className="inline-flex items-center justify-between gap-2 rounded-full border border-emerald-700/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-100 sm:justify-center sm:text-[13px]">
+                <span className="inline-flex items-center gap-1">
+                  <FiClock className="opacity-90" /> Min:
+                </span>
+                <strong className="text-white/95">${minWithdraw}</strong>
+              </span>
 
-        {/* Turnover (optional) */}
-        <TurnoverNotice
-          remaining={remainingTurnover}
-          onOk={() => console.log("ok")}
-        />
+              <span className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-700/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-100 sm:text-[13px]">
+                Fee: <strong className="text-white/95">5%</strong>
+              </span>
 
-        {/* Form (disabled if turnover remaining OR no wallet selected) */}
-        <WithdrawForm
-          available={available}
-          disabled={remainingTurnover > 0 || !selectedWallet || isSubmitting}
-          onSubmit={handleSubmit}
-        />
-
-        {/* Bind banner (optional) */}
-        <div className="mt-4 overflow-hidden rounded-xl border border-[#00493B]">
-          <div className="relative">
-            <Image
-              src="/images/bind_wallet.jpg"
-              alt="Bind E-wallet"
-              width={1200}
-              height={400}
-              className="h-28 w-full object-cover opacity-95"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-              <span className="rounded bg-black/60 px-3 py-1 text-sm text-white">
-                Bind E-wallet
+              <span className="col-span-2 inline-flex items-center justify-between gap-2 rounded-full border border-emerald-700/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-100 sm:col-span-1 sm:justify-center sm:text-[13px]">
+                <span>Available:</span>
+                <strong className="text-white/95">
+                  ${availableBalance.toFixed(2)}
+                </strong>
               </span>
             </div>
           </div>
+
+          {/* ── content ─────────────────────────────────────── */}
+          <div className="p-5">
+            {step === "form" ? (
+              <motion.form
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
+                {/* ── amount ────────────────────────────────── */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-neutral-200">
+                    Amount (USDT)
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={amount}
+                      onChange={(e) => handleAmountChange(e.target.value)}
+                      placeholder={`${minWithdraw} or more`}
+                      className="w-full rounded-lg border border-neutral-800 bg-neutral-900/70 px-9 py-2.5 text-sm text-neutral-100 outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-emerald-600/40"
+                      step="0.01"
+                      min={minWithdraw}
+                    />
+                  </div>
+
+                  {/* ── inline calc row ─────────────────────── */}
+                  {amount && !amountError && (
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-neutral-300 md:grid-cols-3">
+                      <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 py-1.5">
+                        Fee (5%):{" "}
+                        <span className="font-semibold text-emerald-300">
+                          ${withdrawFee}
+                        </span>
+                      </div>
+                      <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 py-1.5">
+                        You receive:{" "}
+                        <span className="font-semibold text-emerald-300">
+                          ${actualReceipt}
+                        </span>
+                      </div>
+                      <div className="col-span-2 hidden rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 py-1.5 md:block">
+                        Network:{" "}
+                        <span className="font-semibold">{network}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {!!amountError && (
+                    <p className="mt-1 flex items-center text-xs text-red-500">
+                      <FiAlertCircle className="mr-1" /> {amountError}
+                    </p>
+                  )}
+                </div>
+
+                {/* ── network selector ──────────────────────── */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-neutral-200">
+                    Select network
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["TRC20", "BEP20"] as const).map((n) => {
+                      const active = network === n;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setNetwork(n)}
+                          className={[
+                            "rounded-xl border px-4 py-2 text-sm transition",
+                            active
+                              ? "border-emerald-700/50 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-700/30"
+                              : "border-neutral-800 bg-neutral-900/60 text-neutral-300 hover:border-neutral-700",
+                          ].join(" ")}
+                        >
+                          {n}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ── wallet address ────────────────────────── */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-neutral-200">
+                    {network} wallet address
+                  </label>
+                  <input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder={`Paste ${network} address`}
+                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900/70 px-3 py-2.5 font-mono text-sm text-neutral-100 outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-emerald-600/40"
+                    required
+                  />
+                </div>
+
+                {/* ── submit ────────────────────────────────── */}
+                <button
+                  type="submit"
+                  disabled={
+                    !amount ||
+                    !!amountError ||
+                    !walletAddress ||
+                    user?.is_withdraw_block ||
+                    !availableBalance ||
+                    isResendLoading
+                  }
+                  className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isResendLoading ? "Requesting..." : "Request withdrawal"}
+                </button>
+
+                {user?.is_withdraw_block && (
+                  <p className="mt-1 flex items-center text-xs text-red-500">
+                    <FiAlertCircle className="mr-1" />
+                    You must complete at least 9 tasks to withdraw
+                  </p>
+                )}
+              </motion.form>
+            ) : (
+              /* ── OTP step ───────────────────────────────── */
+              <motion.form
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onSubmit={handleVerify}
+                className="space-y-5"
+              >
+                {/* ── hero ─────────────────────────────────── */}
+                <div className="text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-700/40 bg-emerald-500/10 text-emerald-300">
+                    <FiMail className="text-2xl" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-neutral-100">
+                    Verify withdrawal
+                  </h2>
+                  <p className="text-sm text-neutral-400">
+                    We’ve sent a 6-digit OTP to your email
+                  </p>
+                </div>
+
+                {/* ── OTP boxes ─────────────────────────────── */}
+                <div className="flex justify-center gap-2">
+                  {[...Array(6)].map((_, i) => (
+                    <input
+                      key={i}
+                      id={`otp-${i}`}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
+                      maxLength={1}
+                      value={otp[i] || ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        const next = (j: number) =>
+                          document.getElementById(
+                            `otp-${j}`
+                          ) as HTMLInputElement | null;
+                        if (!val) return;
+                        const arr = otp.split("");
+                        arr[i] = val[0];
+                        const nextOtp = arr.join("").slice(0, 6);
+                        setOtp(nextOtp);
+                        const n = next(i + 1);
+                        if (n) n.focus();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Backspace" && !otp[i] && i > 0) {
+                          const p = document.getElementById(
+                            `otp-${i - 1}`
+                          ) as HTMLInputElement | null;
+                          if (p) p.focus();
+                        }
+                      }}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pasted = e.clipboardData
+                          .getData("text")
+                          .replace(/\D/g, "")
+                          .slice(0, 6);
+                        if (!pasted) return;
+                        setOtp(pasted);
+                        setTimeout(() => {
+                          for (let j = 0; j < pasted.length; j++) {
+                            const el = document.getElementById(
+                              `otp-${j}`
+                            ) as HTMLInputElement | null;
+                            if (el) el.value = pasted[j];
+                          }
+                          const last = document.getElementById(
+                            `otp-${Math.min(5, pasted.length - 1)}`
+                          ) as HTMLInputElement | null;
+                          if (last) last.focus();
+                        }, 0);
+                      }}
+                      className="h-12 w-10 rounded-lg border border-neutral-800 bg-neutral-900/60 text-center text-lg font-semibold text-neutral-100 outline-none focus:ring-2 focus:ring-emerald-600/40"
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!otp || otp.length < 6 || isVerifyLoading}
+                  className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isVerifyLoading ? "Verifying..." : "Confirm withdrawal"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStep("form")}
+                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-2 text-sm text-neutral-300 hover:border-neutral-700"
+                >
+                  <span className="inline-flex items-center">
+                    <FiArrowLeft className="mr-2" /> Back to form
+                  </span>
+                </button>
+              </motion.form>
+            )}
+
+            {/* ── notes / guidelines ────────────────────────── */}
+            <div className="mt-6 overflow-hidden rounded-xl border border-neutral-800">
+              <div className="flex items-center gap-2 border-b border-neutral-800 bg-neutral-900/60 px-4 py-2">
+                <FiInfo className="text-emerald-300" />
+                <h4 className="text-sm font-semibold text-neutral-200">
+                  Withdrawal guidelines
+                </h4>
+              </div>
+              <div className="space-y-3 p-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-emerald-700/40 bg-emerald-500/10 text-xs font-bold text-emerald-300">
+                    1
+                  </span>
+                  <div>
+                    <div className="font-medium text-neutral-200">
+                      Minimum withdrawal
+                    </div>
+                    <div className="text-neutral-400">
+                      ${minWithdraw} USDT required for all withdrawals.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-emerald-700/40 bg-emerald-500/10 text-xs font-bold text-emerald-300">
+                    2
+                  </span>
+                  <div>
+                    <div className="font-medium text-neutral-200">
+                      Network fees
+                    </div>
+                    <div className="text-neutral-400">
+                      5% flat fee applies to all {network} transactions.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-emerald-700/40 bg-emerald-500/10 text-xs font-bold text-emerald-300">
+                    3
+                  </span>
+                  <div>
+                    <div className="font-medium text-neutral-200">
+                      Processing time
+                    </div>
+                    <div className="text-neutral-400">
+                      Typically completes within 0–72 hours (depends on
+                      network).
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-emerald-700/40 bg-emerald-500/10 text-xs font-bold text-emerald-300">
+                    <FiCheck />
+                  </span>
+                  <div>
+                    <div className="font-medium text-neutral-200">
+                      Address verification
+                    </div>
+                    <div className="text-neutral-400">
+                      Ensure your {network} address is correct. Transactions
+                      cannot be reversed.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* ── /notes ────────────────────────────────────── */}
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
