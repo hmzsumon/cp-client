@@ -1,16 +1,15 @@
 // Central place to edit menu items
 import type { LucideIcon } from "lucide-react";
 import {
+  ChartCandlestick,
   Clock4,
   Download,
   Grid2x2,
-  HelpCircle,
   LifeBuoy,
   MessageSquare,
   Settings,
   SquareGanttChart,
   Upload,
-  Wallet,
 } from "lucide-react";
 
 export type NavChild = { label: string; sublabel?: string; href: string };
@@ -25,7 +24,24 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { key: "accounts", label: "My accounts", icon: Grid2x2, href: "/dashboard" },
+  { key: "accounts", label: "Dashboard", icon: Grid2x2, href: "/dashboard" },
+  {
+    key: "settings",
+    label: "My Accounts",
+    icon: ChartCandlestick,
+
+    children: [
+      { label: "Open", href: "/settings/profile" },
+      {
+        label: "Pending",
+        href: "/settings/security",
+      },
+      {
+        label: "Closed",
+        href: "/settings/security",
+      },
+    ],
+  },
   { key: "deposit", label: "Deposit", icon: Download, href: "/deposit" },
   { key: "withdraw", label: "Withdraw", icon: Upload, href: "/withdraw" },
   {
@@ -34,37 +50,21 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Clock4,
     href: "/dashboard/history",
   },
-  {
-    key: "wallet",
-    label: "Crypto wallet",
-    icon: Wallet,
-    href: "/dashboard/wallet",
-  },
-  {
-    key: "support",
-    label: "Support hub",
-    icon: LifeBuoy,
-    href: "/dashboard/support",
-    badge: "new",
-  },
+
   {
     key: "settings",
     label: "Settings",
     icon: Settings,
-    badge: "new",
+
     children: [
-      { label: "Profile", href: "/dashboard/settings/profile" },
+      { label: "Profile", href: "/settings/profile" },
       {
         label: "Security",
-        href: "/dashboard/settings/security",
-        sublabel: "New",
+        href: "/settings/security",
       },
-      { label: "Trading Terminals", href: "/dashboard/settings/terminals" },
-      { label: "Trading Conditions", href: "/dashboard/settings/conditions" },
-      { label: "Virtual Private Server", href: "/dashboard/settings/vps" },
     ],
   },
-  // bottom
+
   {
     key: "chat",
     label: "Live Chat",
@@ -73,23 +73,10 @@ export const NAV_ITEMS: NavItem[] = [
     section: "bottom",
   },
   {
-    key: "products",
-    label: "Exness Products",
-    icon: SquareGanttChart,
-    section: "bottom",
-    children: [
-      { label: "Personal area", href: "#" },
-      { label: "Exness terminal", href: "#" },
-      { label: "Public website", href: "#" },
-      { label: "Partnership", href: "#" },
-    ],
-  },
-  {
-    key: "help",
-    label: "Help",
-    icon: HelpCircle,
-    section: "bottom",
-    href: "/dashboard/help",
+    key: "support",
+    label: "Support",
+    icon: LifeBuoy,
+    href: "/dashboard/support",
   },
 ];
 

@@ -3,8 +3,7 @@
 import Header from "@/components/auth/Header";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import DesktopSidebar from "./DesktopSidebar";
-import MobileSidebar from "./MobileSidebar";
+import { DesktopSidebar, MobileSidebar } from "../sidebar";
 
 export default function DashboardLayout({
   children,
