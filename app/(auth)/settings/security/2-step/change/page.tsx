@@ -89,7 +89,7 @@ export default function TwoStepChangePage() {
 
       <button
         disabled
-        className="mx-4 block rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3 text-center font-medium text-neutral-400"
+        className="mx-4 w-full block rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3 text-center font-medium text-neutral-400"
       >
         Next
       </button>
