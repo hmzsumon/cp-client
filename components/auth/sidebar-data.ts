@@ -33,10 +33,10 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/deposit",
   },
   {
-    key: "withdrawal",
-    label: "Withdrawal",
+    key: "withdraw",
+    label: "Withdraw",
     icon: Upload,
-    href: "/withdrawal",
+    href: "/withdraw",
   },
   {
     key: "history",

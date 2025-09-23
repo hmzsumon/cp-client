@@ -73,23 +73,6 @@ export default function MobileSidebar({ open, onClose }: Props) {
             </div>
 
             <div className="mt-3 space-y-1">
-              <Link
-                href="/dashboard/settings/profile"
-                onClick={onClose}
-                className="flex items-center justify-between rounded-lg px-2 py-2 text-sm hover:bg-neutral-900"
-              >
-                <span>Settings</span>
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                  New
-                </span>
-              </Link>
-              <Link
-                href="/dashboard/settings/conditions"
-                onClick={onClose}
-                className="block rounded-lg px-2 py-2 text-sm hover:bg-neutral-900"
-              >
-                Trading conditions
-              </Link>
               <button
                 type="button"
                 className="block w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-neutral-900"

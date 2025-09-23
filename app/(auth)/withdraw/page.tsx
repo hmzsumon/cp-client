@@ -201,7 +201,7 @@ export default function WithdrawPage() {
             {/* top row: back + title (mobile: stacked) */}
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Link
-                href="/asset"
+                href="/dashboard"
                 className="inline-flex items-center self-start rounded-lg bg-black/10 px-3 py-1.5 text-sm font-medium text-white/90 hover:bg-black/20"
               >
                 <FiArrowLeft className="mr-2" /> Back
