@@ -31,7 +31,7 @@ export default function SecurityPage() {
           end={<span className="text-neutral-300">Email</span>}
         />
         <Row
-          href="#"
+          href="/settings/security/set-pin"
           icon={<Keyboard className="h-5 w-5 text-neutral-300" />}
           title="Set new PIN"
         />

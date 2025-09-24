@@ -10,6 +10,7 @@ import {
   Settings,
   SquareGanttChart,
   Upload,
+  Wallet,
 } from "lucide-react";
 
 export type NavChild = { label: string; sublabel?: string; href: string };
@@ -26,7 +27,7 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { key: "accounts", label: "Dashboard", icon: Grid2x2, href: "/dashboard" },
   {
-    key: "settings",
+    key: "accounts",
     label: "My Accounts",
     icon: ChartCandlestick,
 
@@ -44,6 +45,19 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { key: "deposit", label: "Deposit", icon: Download, href: "/deposit" },
   { key: "withdraw", label: "Withdraw", icon: Upload, href: "/withdraw" },
+  {
+    key: "wallet",
+    label: "Wallet",
+    icon: Wallet,
+
+    children: [
+      { label: "P2P", href: "/wallet/p2p" },
+      {
+        label: "Internal Transfer",
+        href: "/wallet/transfer",
+      },
+    ],
+  },
   {
     key: "history",
     label: "Transaction history",

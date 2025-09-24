@@ -129,24 +129,6 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // change email
-    changeEmail: builder.mutation<IUser, any>({
-      query: (body) => ({
-        url: "/change-email",
-        method: "PUT",
-        body,
-      }),
-      invalidatesTags: ["User"],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          const result = await queryFulfilled;
-          dispatch(logoutUser());
-        } catch (error) {
-          console.log(error);
-        }
-      },
-    }),
-
     // verify code for change email
     verifyCodeForChangeEmail: builder.mutation<IUser, any>({
       query: (body) => ({
@@ -315,6 +297,84 @@ export const authApi = apiSlice.injectEndpoints({
         body,
       }),
     }),
+
+    /* ────────── Set/Change security pin mutation ────────── */
+    setSecurityPin: builder.mutation<any, { newPin: string; oldPin?: string }>({
+      query: (body) => ({
+        url: "/security-pin",
+        method: "PUT",
+        body,
+      }),
+    }),
+
+    /* ── email change ───────────────────────────────────────── */
+    changeEmail: builder.mutation<{ message: string }, { email: string }>({
+      query: (body) => ({
+        url: "/account/email",
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
+    // ── phone change ─────────────────────────────────────────
+    changePhone: builder.mutation<{ message: string }, { phone: string }>({
+      query: (body) => ({
+        url: "/account/phone",
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
+    /* ────────── password change mutation ────────── */
+    changePassword: builder.mutation<
+      any,
+      { oldPassword: string; newPassword: string }
+    >({
+      query: (body) => ({
+        url: "/change-password",
+        method: "PUT",
+        body,
+      }),
+    }),
+
+    /* ────────── send reset code by email (uses resendVerificationEmail controller) ────────── */
+    sendResetCode: builder.mutation<{ message: string }, { email: string }>({
+      query: (body) => ({
+        url: "/resend-verification-email",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    /* ────────── verify code (uses verifyOtpForForgotPassword controller) ────────── */
+
+    verifyResetCode: builder.mutation<
+      { message: string },
+      { email: string; otp: string }
+    >({
+      query: (body) => ({
+        url: "/verify-otp-for-password",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    /* ────────── reset password (uses resetForgotPassword controller) ────────── */
+
+    resetForgotPassword: builder.mutation<
+      { message: string },
+      { email: string; newPassword: string }
+    >({
+      query: (body) => ({
+        url: "/reset-forgot-password",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    /* ────────── End────────── */
   }),
 });
 
@@ -354,4 +414,12 @@ export const {
   useGetUserPaymentMethodsQuery,
 
   useVerifyOtpForForgotPasswordMutation,
+
+  useSetSecurityPinMutation,
+  useChangePhoneMutation,
+  useChangePasswordMutation,
+
+  useSendResetCodeMutation,
+  useVerifyResetCodeMutation,
+  useResetForgotPasswordMutation,
 } = authApi;

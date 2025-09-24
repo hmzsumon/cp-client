@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { useLoginUserMutation } from "@/redux/features/auth/authApi";
+import Link from "next/link";
 import { Button, Field, Input } from "./UI";
 import { signInSchema, type SignInValues } from "./schemas";
 
@@ -34,7 +35,8 @@ const SignInForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
       onSuccess?.();
       router.push("/dashboard");
     } catch (e: any) {
-      toast.error(e?.data?.message || "Unable to sign in", { id: tId });
+      console.log(e);
+      toast.error(e?.data?.error || "Unable to sign in", { id: tId });
     }
   });
 
@@ -76,6 +78,15 @@ const SignInForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
             {show ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+        {/* ────────── Forgot password ────────── */}
+        <Link href="/forgot-password" className="flex items-center justify-end">
+          <button
+            type="button"
+            className="text-xs font-medium text-neutral-400 hover:text-neutral-200"
+          >
+            Forgot password?
+          </button>
+        </Link>
       </Field>
 
       <Button type="submit" disabled={isLoading} className="w-full">

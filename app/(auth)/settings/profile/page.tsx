@@ -6,10 +6,18 @@ import AccountSummary from "@/components/profile/AccountSummary";
 import AddProfileForm from "@/components/profile/AddProfileForm";
 import VerificationSteps from "@/components/profile/VerificationSteps";
 import VerifyEmailCard from "@/components/profile/VerifyEmailCard";
-import VerifyPhoneCard from "@/components/profile/VerifyPhoneCard";
+
+import { go } from "@/redux/features/kyc/kycSlice";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function ProfilePage() {
+  const d = useDispatch();
+  const router = useRouter();
+
+  const { user } = useSelector((state: any) => state.auth);
+
   /* ── mocked progress state (তুমি API দিয়ে বাঁধবে) ───────── */
   const [emailVerified, setEmailVerified] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
@@ -17,6 +25,12 @@ export default function ProfilePage() {
 
   const completed =
     Number(emailVerified) + Number(basicInfoDone) + Number(phoneVerified);
+
+  /* ── helper: KYC পেজে নিয়ে যাও + স্টেপ স্টার্ট করো ───────── */
+  const startKyc = () => {
+    d(go("start")); // redux step সেট
+    router.push("/kyc"); // পেজ ন্যাভিগেশন
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-3 py-4 md:px-6 md:py-6">
@@ -37,7 +51,7 @@ export default function ProfilePage() {
             openByDefault: !emailVerified,
             content: (
               <div className="space-y-4">
-                {!emailVerified && (
+                {!user?.email_verified && (
                   <VerifyEmailCard onSuccess={() => setEmailVerified(true)} />
                 )}
                 {!basicInfoDone && (
@@ -63,9 +77,11 @@ export default function ProfilePage() {
                   <li>Bank card and crypto payments</li>
                   <li>Trading</li>
                 </ul>
+
+                {/* ── এখানে ক্লিক করলে KYC পেজ ওপেন হবে ─────── */}
                 <button
-                  disabled
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3 text-sm text-neutral-500"
+                  onClick={startKyc}
+                  className="w-full rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
                 >
                   Complete now
                 </button>
@@ -79,9 +95,6 @@ export default function ProfilePage() {
             openByDefault: !phoneVerified && emailVerified,
             content: (
               <div className="space-y-4">
-                {!phoneVerified && (
-                  <VerifyPhoneCard onSuccess={() => setPhoneVerified(true)} />
-                )}
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-neutral-200">
                     Features and limits

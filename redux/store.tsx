@@ -15,6 +15,7 @@ import depositMethodReducer from "./depositMethodSlice";
 import accountUIReducer from "./features/account/accountUISlice";
 import { apiSlice } from "./features/api/apiSlice";
 import authReducer from "./features/auth/authSlice";
+import kycReducer from "./features/kyc/kycSlice";
 import sidebarReducer from "./features/ui/sidebarSlice";
 import uiReducer from "./features/ui/uiSlice";
 import walletReducer from "./features/wallet/walletSlice";
@@ -41,6 +42,7 @@ export const rootReducer = combineReducers({
   wallet: walletReducer,
   ui: uiReducer,
   accountUI: accountUIReducer,
+  kyc: kycReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

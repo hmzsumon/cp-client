@@ -1,12 +1,15 @@
 "use client";
 
+import CopyToClipboard from "@/lib/CopyToClipboard";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { useLogoutUserMutation } from "@/redux/features/auth/authApi";
 import { LogOut, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 export default function UserMenu({ open }: { open: boolean }) {
+  const { user } = useSelector((state: any) => state.auth);
   const router = useRouter();
   const [logoutUser, { isLoading }] = useLogoutUserMutation();
 
@@ -36,11 +39,9 @@ export default function UserMenu({ open }: { open: boolean }) {
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-white">
-            H M ZAKARIA
+            {user?.name}
           </div>
-          <div className="truncate text-xs text-neutral-400">
-            h****2@gmail.com
-          </div>
+          <div className="truncate text-xs text-neutral-400">{user?.email}</div>
         </div>
       </div>
 
@@ -49,18 +50,11 @@ export default function UserMenu({ open }: { open: boolean }) {
         role="menuitem"
       >
         <span className="inline-flex items-center gap-2">
-          <Settings size={16} /> Settings
+          <Settings size={16} /> {user?.customerId}
         </span>
         <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-          New
+          <CopyToClipboard text={user?.customerId || ""} />
         </span>
-      </button>
-
-      <button
-        className="w-full rounded-lg px-3 py-2 text-left text-sm text-neutral-200 hover:bg-neutral-900"
-        role="menuitem"
-      >
-        Trading conditions
       </button>
 
       <div className="my-1 border-t border-neutral-900" />
