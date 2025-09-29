@@ -14,7 +14,7 @@ import {
   IChartApi,
   Time,
 } from "lightweight-charts";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 type Props = {
   symbol: string; // e.g. "BTCUSDT"
@@ -37,17 +37,6 @@ export default function LiveChart({
   const klineStream = `kline_${interval}` as const;
   const { data: kline } = useBinanceStream(symbol, klineStream);
   const { data: book } = useBinanceStream(symbol, "bookTicker");
-
-  // bid/ask UI texts
-  const [askText, bidText] = useMemo(() => {
-    const ask = book?.a ? Number(book.a) : undefined;
-    const bid = book?.b ? Number(book.b) : undefined;
-    const dp = priceDecimals(symbol);
-    return [
-      ask !== undefined ? ask.toFixed(dp) : "-",
-      bid !== undefined ? bid.toFixed(dp) : "-",
-    ];
-  }, [book, symbol]);
 
   // ---------- mount / rebuild on symbol or interval ----------
   useEffect(() => {
@@ -162,21 +151,13 @@ export default function LiveChart({
       low: +k.l,
       close: +k.c,
     };
-    seriesRef.current.update(bar);
+    seriesRef?.current?.update(bar);
   }, [kline]);
 
   return (
     <div className="relative h-full w-full">
       <div ref={wrap} className="absolute inset-0" />
       {/* bid / ask bubbles */}
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 items-end pointer-events-none">
-        <span className="px-3 py-1.5 rounded-full bg-blue-600 font-semibold shadow-md">
-          {askText}
-        </span>
-        <span className="px-3 py-1.5 rounded-full bg-red-600 font-semibold shadow-md">
-          {bidText}
-        </span>
-      </div>
     </div>
   );
 }

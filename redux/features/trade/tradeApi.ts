@@ -12,13 +12,14 @@ export interface Position {
   openedAt: string;
   closedAt?: string;
   profit?: number;
+  lastPrice?: number;
 }
 
 export const tradeApi = apiSlice.injectEndpoints({
   endpoints: (b) => ({
-    listDemoPositions: b.query<{ items: Position[] }, { accountId: string }>({
+    listPositions: b.query<{ items: Position[] }, { accountId: string }>({
       query: ({ accountId }) => ({
-        url: `/demo/positions?accountId=${accountId}`,
+        url: `/positions?accountId=${accountId}`,
       }),
       providesTags: ["Positions"],
     }),
@@ -72,13 +73,28 @@ export const tradeApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Accounts", "Positions"],
     }),
+    /* ────────── get close positions ────────── */
+    getClosePositions: b.query<
+      any,
+      { accountId: string; status?: "open" | "closed"; limit?: number }
+    >({
+      query: () => ({ url: "/closed-positions" }),
+      providesTags: ["Positions"],
+    }),
+
+    /* ────────── get  position by id ────────── */
+    getPosition: b.query<{ item: any }, { id: string }>({
+      query: ({ id }) => `/positions/${id}`,
+    }),
   }),
 });
 
 export const {
-  useListDemoPositionsQuery,
+  useListPositionsQuery,
   useOpenDemoOrderMutation,
   useCloseDemoPositionMutation,
   usePlaceMarketOrderMutation,
   useClosePositionMutation,
+  useGetClosePositionsQuery,
+  useGetPositionQuery,
 } = tradeApi;

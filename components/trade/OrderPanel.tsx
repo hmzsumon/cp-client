@@ -1,6 +1,6 @@
-/* components/trade/OrderPanel.tsx */
 "use client";
 
+import SpreadBadge from "@/components/ui/SpreadBadge";
 import { usePriceStream } from "@/hooks/usePriceStream";
 import { usePlaceMarketOrderMutation } from "@/redux/features/trade/tradeApi";
 import { useMemo, useState } from "react";
@@ -12,29 +12,28 @@ export default function OrderPanel({
   account,
 }: {
   symbol: string;
-  account: any; // {_id, currency, leverage}
+  account: any;
 }) {
   const { price } = usePriceStream(symbol);
   const [lots, setLots] = useState(0.1);
   const [side, setSide] = useState<Side>("buy");
   const [place, { isLoading }] = usePlaceMarketOrderMutation();
 
-  const bid = price?.bid ?? 0;
-  const ask = price?.ask ?? 0;
-  const mid = price?.mid ?? 0;
+  const bid = Number(price?.bid) || 0;
+  const ask = Number(price?.ask) || 0;
+  const mid = Number(price?.mid) || 0;
 
   const leverage = account?.leverage ?? 200;
   const contractSize = useMemo(
     () => (symbol.includes("XAU") ? 100 : 1),
     [symbol]
-  ); // ক্রিপ্টো হলে 1, XAU হলে 100oz
+  );
   const notional = mid * contractSize * lots;
   const margin = notional / leverage;
   const canTrade = !!account && !!mid && lots > 0;
 
   const handleConfirm = async () => {
     if (!canTrade || isLoading) return;
-
     const execPrice = side === "buy" ? ask || mid : bid || mid;
 
     try {
@@ -46,13 +45,10 @@ export default function OrderPanel({
         price: execPrice,
       }).unwrap();
 
-      // ⭐ UI-কে জানিয়ে দাও — position খুলেছে
-      const position = res.position; // backend যা ফেরত দেয়
+      const position = res.position;
       window.dispatchEvent(
         new CustomEvent("position:opened", { detail: { position } })
       );
-
-      // ছোট টোস্ট
       window.dispatchEvent(
         new CustomEvent("toast", {
           detail: {
@@ -76,7 +72,6 @@ export default function OrderPanel({
     <div className="rounded-t-2xl bg-neutral-950 border-t border-neutral-800 p-4">
       <div className="text-center text-sm text-neutral-400">Regular</div>
 
-      {/* Volume */}
       <div className="mt-3">
         <div className="text-sm text-neutral-400">Volume</div>
         <div className="mt-2 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center">
@@ -100,8 +95,7 @@ export default function OrderPanel({
         </div>
       </div>
 
-      {/* Sell / Buy toggle (one tap to arm) */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-3 items-center">
         <button
           onClick={() => setSide("sell")}
           className={`rounded-xl py-3 font-semibold ${
@@ -110,6 +104,7 @@ export default function OrderPanel({
         >
           Sell {bid ? bid.toFixed(2) : "-"}
         </button>
+
         <button
           onClick={() => setSide("buy")}
           className={`rounded-xl py-3 font-semibold ${
@@ -120,7 +115,11 @@ export default function OrderPanel({
         </button>
       </div>
 
-      {/* Confirm */}
+      {/* ↓ এখানে মাঝের স্প্রেড ব্যাজ */}
+      <div className="mt-2 flex items-center justify-center">
+        <SpreadBadge symbol={symbol} />
+      </div>
+
       <div className="mt-3">
         <button
           disabled={!canTrade || isLoading}

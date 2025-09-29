@@ -1,14 +1,20 @@
+// components/trade/parts/PositionsStrip.tsx
+/* ───────────────────────────────────────────
+   symbol strip with counts and live pnl
+─────────────────────────────────────────── */
+
 "use client";
 
-import { usePriceStream } from "@/hooks/usePriceStream";
-import { useListDemoPositionsQuery } from "@/redux/features/trade/tradeApi";
-import { useMemo } from "react";
+import LiveGroupPnlBadge from "@/components/ui/LiveGroupPnlBadge";
+import { useSymbolStripMetrics } from "@/hooks/useSymbolStripMetrics";
+import { useListPositionsQuery } from "@/redux/features/trade/tradeApi";
+import Link from "next/link";
 
 type Props = {
   accountId?: string;
-  symbol: string; // same symbol as chart
+  symbol: string;
   onOpenList: () => void;
-  onCloseClick: (posId?: string) => void; // open confirm dialog
+  onCloseClick: (posId?: string) => void;
 };
 
 export default function PositionsStrip({
@@ -17,68 +23,46 @@ export default function PositionsStrip({
   onOpenList,
   onCloseClick,
 }: Props) {
-  const { data } = useListDemoPositionsQuery(
+  const { data } = useListPositionsQuery(
     { accountId: accountId! },
     { skip: !accountId }
   );
-  const { price } = usePriceStream(symbol);
 
-  const { openCount, pendingCount, pnl, lastOpenId } = useMemo(() => {
-    const items = data?.items ?? [];
-    const opens = items.filter((p) => p.status === "open");
-    // symbol-wise live PnL sum
-    let live = 0;
-    for (const p of opens) {
-      if (p.symbol !== symbol) continue;
-      const sidePx = p.side === "buy" ? price?.bid : price?.ask; // close price
-      if (!sidePx || !isFinite(sidePx)) continue;
-      const cs =
-        (p as any).contractSize ?? (p.symbol.includes("XAU") ? 100 : 1);
-      const diff =
-        p.side === "buy" ? sidePx - p.entryPrice : p.entryPrice - sidePx;
-      live += diff * cs * p.volume; // backend field name volume (aka lots)
-    }
-    return {
-      openCount: opens.length,
-      pendingCount: 0,
-      pnl: isFinite(live) ? live : 0,
-      lastOpenId: opens.find((p) => p.symbol === symbol)?._id,
-    };
-  }, [data, price, symbol]);
+  const items = data?.items ?? [];
+  const { openCount, pendingCount, pnl, lastOpenId } = useSymbolStripMetrics({
+    symbol,
+    positions: items,
+  });
 
   return (
-    <div className="px-3">
-      <div className="mt-2 rounded-2xl bg-neutral-900 border border-neutral-800 px-3 py-2">
+    <div className="text-xs">
+      <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={onOpenList}
-              className="px-3 py-1.5 rounded-full bg-neutral-800 text-sm"
-            >
-              Open <b className="ml-1">{openCount}</b>
-            </button>
-            <button className="px-3 py-1.5 rounded-full bg-neutral-800 text-sm opacity-80">
-              Pending <b className="ml-1">{pendingCount}</b>
+            <Link href="/positions" className="font-medium">
+              <button className="py-1.5 rounded-lg px-2 bg-neutral-800 text-xs">
+                Open <b className="ml-1">{openCount}</b>
+              </button>
+            </Link>
+            <button className="px-2 py-1.5 rounded-lg bg-neutral-800 text-xs opacity-80">
+              Closed <b className="ml-1">{pendingCount}</b>
             </button>
           </div>
 
-          {/* PnL + close -> open close dialog */}
-          <div
-            className={`flex items-center gap-3 px-3 py-1.5 rounded-lg ${
-              pnl >= 0
-                ? "bg-green-600/15 text-green-400"
-                : "bg-red-600/15 text-red-400"
-            }`}
+          <LiveGroupPnlBadge
+            symbol={symbol}
+            positions={items as any}
+            className=""
+            size="sm"
+          />
+
+          <button
+            onClick={() => onCloseClick(lastOpenId)}
+            className="px-1.5 py-1 rounded bg-neutral-800/70 text-neutral-200 hover:bg-neutral-700 ml-2"
+            title="Close position"
           >
-            <span>{(pnl >= 0 ? "+" : "") + pnl.toFixed(2)} USD</span>
-            <button
-              onClick={() => onCloseClick(lastOpenId)}
-              className="px-1.5 py-1 rounded bg-neutral-800/70 text-neutral-200 hover:bg-neutral-700"
-              title="Close position"
-            >
-              ✕
-            </button>
-          </div>
+            ✕
+          </button>
         </div>
       </div>
     </div>

@@ -25,21 +25,24 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { key: "accounts", label: "Dashboard", icon: Grid2x2, href: "/dashboard" },
+  { key: "dashboard", label: "Dashboard", icon: Grid2x2, href: "/dashboard" },
   {
     key: "accounts",
     label: "My Accounts",
     icon: ChartCandlestick,
+    href: "/accounts",
+  },
+  {
+    key: "positions",
+    label: "My Positions",
+    icon: ChartCandlestick,
 
     children: [
-      { label: "Open", href: "/settings/profile" },
-      {
-        label: "Pending",
-        href: "/settings/security",
-      },
+      { label: "Open", href: "/positions" },
+
       {
         label: "Closed",
-        href: "/settings/security",
+        href: "/closed-positions",
       },
     ],
   },

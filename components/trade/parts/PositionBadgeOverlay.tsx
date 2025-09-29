@@ -1,17 +1,22 @@
+// components/trade/parts/PositionBadgeOverlay.tsx
 "use client";
 
+/* ── চার্টের উপর ছোট ব্যাজ + ক্লোজ ──────────────────────────
+   - গ্লোবাল ইভেন্ট: position:opened / position:closed
+   - P/L ক্যাল্ক: tradeMath.positionPnl (crypto: 1 lot = 1 coin)
+---------------------------------------------------------------- */
 import { usePriceStream } from "@/hooks/usePriceStream";
+import { fmt } from "@/utils/num";
+import { positionPnl } from "@/utils/tradeMath";
 import { useEffect, useMemo, useState } from "react";
 import ClosePositionDialog from "./ClosePositionDialog";
 
-// 🔒 server model-এর সাথে মিলিয়ে নিন
 type Pos = {
   _id: string;
   symbol: string;
   side: "buy" | "sell";
-  lots: number; // ✅ volume নয়, lots
+  volume: number; // ✅ backend field name
   entryPrice: number;
-  contractSize?: number; // crypto=1, XAU=100...
   status: "open" | "closed";
 };
 
@@ -29,8 +34,14 @@ export default function PositionBadgeOverlay({
   // listen global events from place/close APIs
   useEffect(() => {
     const onOpen = (e: any) => {
-      const p: Pos = e.detail?.position;
-      if (p && p.symbol === symbol && p.status === "open") setPos(p);
+      const p: Pos | undefined = e.detail?.position;
+      if (
+        p &&
+        (p.symbol || "").toUpperCase() === symbol.toUpperCase() &&
+        p.status === "open"
+      ) {
+        setPos(p);
+      }
     };
     const onClosed = (e: any) => {
       const id = e.detail?.id;
@@ -44,60 +55,48 @@ export default function PositionBadgeOverlay({
     };
   }, [symbol]);
 
-  // safe helpers
-  const lotsText = typeof pos?.lots === "number" ? pos!.lots.toFixed(2) : "-";
-  const execPx = useMemo(() => {
-    if (!pos || !price) return NaN;
-    // closeable price (buy→bid, sell→ask)
+  // exec/close px (buy→bid, sell→ask)
+  const closePx = useMemo(() => {
+    if (!price || !pos) return NaN;
     const px = pos.side === "buy" ? price.bid : price.ask;
     return typeof px === "number" && isFinite(px) ? px : NaN;
   }, [pos, price]);
 
+  // একটাই ম্যাথ
   const pnl = useMemo(() => {
-    if (!pos || !isFinite(execPx)) return 0;
-    const cs = pos.contractSize ?? (pos.symbol.includes("XAU") ? 100 : 1); // crypto default 1
-    const diff =
-      pos.side === "buy" ? execPx - pos.entryPrice : pos.entryPrice - execPx;
-    const value = diff * cs * pos.lots;
-    return isFinite(value) ? value : 0;
-  }, [pos, execPx]);
+    if (!pos || !isFinite(closePx)) return NaN;
+    return positionPnl({
+      side: pos.side,
+      entryPrice: pos.entryPrice,
+      closePrice: closePx,
+      lots: pos.volume,
+    });
+  }, [pos, closePx]);
 
-  // no open position → nothing to draw
   if (!pos) return null;
 
   return (
     <>
-      {/* Top-left live PnL pill */}
-      <div className="absolute left-4 top-3 z-10">
-        <div
-          className={`px-3 py-1.5 rounded-lg font-medium ${
-            pnl >= 0
-              ? "bg-green-600/20 text-green-400"
-              : "bg-red-600/20 text-red-400"
-          }`}
-        >
-          {(pnl >= 0 ? "+" : "") + pnl.toFixed(2)} {accountCurrency}
-        </div>
-      </div>
-
-      {/* Entry badge + close button (Exness style) */}
-      <div className="absolute left-4 top-14 z-10">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-1 rounded-md bg-neutral-800 border border-neutral-700 text-sm">
-            {lotsText}
+      {/* entry badge + P/L + close button */}
+      <div className="absolute left-0 bottom-0 z-10">
+        <div className="flex items-center gap-1">
+          <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded">
+            {fmt(pos.volume, 2)}
           </span>
           <span
-            className={`px-2 py-1 rounded-md text-sm ${
-              pnl >= 0
+            className={`px-2 py-1 text-xs rounded ${
+              Number.isFinite(pnl) && pnl >= 0
                 ? "bg-green-600/20 text-green-400"
                 : "bg-red-600/20 text-red-400"
             }`}
           >
-            {(pnl >= 0 ? "+" : "") + pnl.toFixed(2)} {accountCurrency}
+            {Number.isFinite(pnl) ? (pnl >= 0 ? "+" : "") + fmt(pnl, 2) : "–"}{" "}
+            {accountCurrency}
           </span>
           <button
             onClick={() => setShowClose(true)}
-            className="ml-2 px-2 py-1 rounded-md bg-neutral-800 hover:bg-neutral-700 text-sm"
+            className="ml-2 px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-xs"
+            title="Close position"
           >
             ✕
           </button>
@@ -110,7 +109,7 @@ export default function PositionBadgeOverlay({
             _id: pos._id,
             symbol: pos.symbol,
             side: pos.side,
-            volume: pos.lots, // dialog props নাম volume ছিল
+            volume: pos.volume,
             entryPrice: pos.entryPrice,
           }}
           lastPrice={price?.mid ?? pos.entryPrice}
