@@ -12,7 +12,7 @@ const nextConfig = {
       {
         source: "/api/v1/:path*",
         destination:
-          "https://cpfx-api-01d22e6d8bdf.herokuapp.com/api/v1/:path*",
+          "https://cgfx-api-571c8ffe2dd2.herokuapp.com/api/v1/:path*",
       },
     ];
   },
