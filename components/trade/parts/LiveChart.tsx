@@ -1,5 +1,8 @@
+// components/trade/parts/LiveChart.tsx
 /* ──────────────────────────────────────────────────────────────────────────
-   LiveChart — Exness-like lightweight-charts (Binance data)
+   LiveChart — Exness-like lightweight-charts (Klines from your API)
+   - Initial REST fill from configurable backend base
+   - Live WS (unchanged)
 ────────────────────────────────────────────────────────────────────────── */
 "use client";
 
@@ -15,6 +18,12 @@ import {
   Time,
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
+
+/** Frontend env for backend base
+ *  NEXT_PUBLIC_API_BASE="https://cgfx-api-571c8ffe2dd2.herokuapp.com"
+ *  (লোকালে না দিলে "" থাকবে, তখন relative /api/... ব্যবহার করবে)
+ */
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/+$/, ""); // trim trailing /
 
 type Props = {
   symbol: string; // e.g. "BTCUSDT"
@@ -105,9 +114,18 @@ export default function LiveChart({
           interval,
           limit: String(limit),
         });
-        const res = await fetch(`/api/crypto/klines?${q.toString()}`, {
-          cache: "no-store",
-        });
+
+        // যদি NEXT_PUBLIC_API_BASE সেট থাকে → absolute URL
+        // না থাকলে → relative (/api/crypto/klines) – লোকালের জন্য
+        const url =
+          (API_BASE ? `${API_BASE}` : "") +
+          `/api/crypto/klines?${q.toString()}`;
+
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) {
+          // optional: ইউআই-তে warning দেখাতে চাইলে এখানে customEvent করতে পারো
+          throw new Error(`klines fetch failed: ${res.status}`);
+        }
         const json = await res.json();
         const data: CandlestickData[] = (json?.data ?? []).map((k: any) => ({
           time: k.time as Time,
@@ -125,7 +143,10 @@ export default function LiveChart({
         const from = Math.max(0, total - show);
         const to = total + 3;
         chart.timeScale().setVisibleLogicalRange({ from, to });
-      } catch {}
+      } catch (e) {
+        // সাইলেন্ট ফেইল — চাইলে টোস্ট দাও
+        // console.warn(e);
+      }
     })();
 
     return () => {
