@@ -23,7 +23,8 @@ import { useEffect, useRef } from "react";
  *  NEXT_PUBLIC_API_BASE="https://cgfx-api-571c8ffe2dd2.herokuapp.com"
  *  (লোকালে না দিলে "" থাকবে, তখন relative /api/... ব্যবহার করবে)
  */
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/+$/, ""); // trim trailing /
+// const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/+$/, ""); // trim trailing /
+const API_BASE = "https://cgfx-api-571c8ffe2dd2.herokuapp.com";
 
 type Props = {
   symbol: string; // e.g. "BTCUSDT"
