@@ -1,14 +1,16 @@
 // components/trade/TradeScreen.tsx
 "use client";
 
+import ChartFullscreen from "@/components/trade/ChartFullscreen";
+import LiveChart, { ChartExpose } from "@/components/trade/parts/LiveChart";
 import { useListPositionsQuery } from "@/redux/features/trade/tradeApi";
 import { num } from "@/utils/num";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+
 import ClosePositionDialog from "./parts/ClosePositionDialog";
 import InstrumentDrawer from "./parts/InstrumentDrawer";
 import InstrumentHeader from "./parts/InstrumentHeader";
-import LiveBalancePill from "./parts/LiveBalancePill"; // ← new
-import LiveChart from "./parts/LiveChart";
+import LiveBalancePill from "./parts/LiveBalancePill";
 import OrderPanel from "./parts/OrderPanel";
 import PositionsStrip from "./parts/PositionsStrip";
 
@@ -17,6 +19,8 @@ export default function TradeScreen({ account }: { account: any }) {
   const [drawer, setDrawer] = useState(false);
   const [openList, setOpenList] = useState(false);
   const [closeTargetId, setCloseTargetId] = useState<string | undefined>();
+  const [showFs, setShowFs] = useState(false); // 👈 fullscreen state
+  const chartRef = useRef<ChartExpose>(null); // 👈 ref to reset zoom
 
   const { data } = useListPositionsQuery(
     { accountId: account?._id },
@@ -42,12 +46,15 @@ export default function TradeScreen({ account }: { account: any }) {
   return (
     <div className="flex flex-col h-full">
       <div className="space-y-1">
-        <LiveBalancePill account={account} positions={positions as any} />{" "}
-        {/* ← live equity */}
+        <LiveBalancePill account={account} positions={positions as any} />
+
         <InstrumentHeader
           symbol={symbol}
           onOpenDrawer={() => setDrawer(true)}
+          onFullscreen={() => setShowFs(true)} // 👈 open overlay
+          onResetZoom={() => chartRef.current?.resetView()} // 👈 reset zoom
         />
+
         <PositionsStrip
           accountId={account?._id}
           symbol={symbol}
@@ -60,7 +67,7 @@ export default function TradeScreen({ account }: { account: any }) {
       </div>
 
       <div className="flex-1 relative mt-4">
-        <LiveChart symbol={symbol} />
+        <LiveChart ref={chartRef} symbol={symbol} /> {/* 👈 ref attached */}
       </div>
 
       <div className="mt-2">
@@ -123,6 +130,15 @@ export default function TradeScreen({ account }: { account: any }) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Fullscreen overlay */}
+      {showFs && (
+        <ChartFullscreen
+          symbol={symbol}
+          interval={"5m"} // চাইলে redux tf পাঠাতে পারো
+          onClose={() => setShowFs(false)}
+        />
       )}
 
       {target && (

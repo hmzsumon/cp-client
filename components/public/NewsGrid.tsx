@@ -1,6 +1,9 @@
-/* ── News Grid ──────────────────────────────────────────────────────────────── */
-
+// components/NewsGrid.tsx
+import trade1 from "@/public/images/trade_01.jpg";
+import trade2 from "@/public/images/trade_02.jpg";
+import trade3 from "@/public/images/trade_03.jpg";
 import { ArrowRight } from "lucide-react";
+import Image from "next/image"; // <-- next/image
 import React from "react";
 import Button from "./Button";
 import Card from "./Card";
@@ -8,18 +11,9 @@ import Container from "./Container";
 import SectionTitle from "./SectionTitle";
 
 const items = [
-  {
-    title: "New: Markets you can trade, end-to-end",
-    img: "https://images.unsplash.com/photo-1518186233392-c232efbf2373?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    title: "Capitalice Affiliate Guide & Program",
-    img: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    title: "Instant withdrawals: fast and convenient processing",
-    img: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1600&auto=format&fit=crop",
-  },
+  { title: "Can trade manually and can also do AI robot trade", img: trade1 },
+  { title: "Capitalice Affiliate Guide & Program", img: trade2 },
+  { title: "Instant withdrawals: fast and convenient processing", img: trade3 },
 ];
 
 const NewsGrid: React.FC = () => (
@@ -32,11 +26,19 @@ const NewsGrid: React.FC = () => (
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((n) => (
           <Card key={n.title} className="p-0">
-            <img
-              src={n.img}
-              alt="news"
-              className="h-44 w-full rounded-2xl object-cover"
-            />
+            {/* Image wrapper to support fill */}
+            <div className="relative h-44 w-full overflow-hidden rounded-2xl">
+              <Image
+                src={n.img}
+                alt="news"
+                fill
+                className="object-cover"
+                placeholder="blur"
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                priority={false}
+              />
+            </div>
+
             <div className="p-5">
               <h4 className="font-semibold text-white">{n.title}</h4>
               <div className="mt-4">

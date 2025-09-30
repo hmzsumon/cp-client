@@ -1,6 +1,8 @@
 /* ── Hero ───────────────────────────────────────────────────────────────────── */
 
+import heroImage from "@/public/images/hero/hero.jpg";
 import { Clock, Headphones, PlayCircle, ShieldCheck, Zap } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 import Button from "./Button";
 import Container from "./Container";
@@ -47,11 +49,11 @@ const Hero: React.FC = () => (
       </div>
 
       <div className="relative">
-        <div className="mx-auto aspect-[9/18] w-72 rounded-[2.2rem] border border-neutral-800 bg-neutral-900 p-3 shadow-2xl sm:w-80">
-          <div className="h-full w-full rounded-[1.6rem] bg-gradient-to-br from-neutral-800 via-neutral-900 to-black" />
-        </div>
-        <div className="pointer-events-none absolute -left-20 top-10 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -right-16 bottom-10 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+        <Image
+          src={heroImage}
+          alt="Hero Image"
+          className="mx-auto rounded-lg shadow-l w-80 object-cover"
+        />
       </div>
     </Container>
   </section>

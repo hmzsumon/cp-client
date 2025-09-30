@@ -1,14 +1,12 @@
+"use client";
 import DashboardShell from "@/components/auth/Layout";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Capitalise — Dashboard",
-};
+import { useLoadUserQuery } from "@/redux/features/auth/authApi";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { data, isLoading, isError } = useLoadUserQuery();
   return <DashboardShell>{children}</DashboardShell>;
 }

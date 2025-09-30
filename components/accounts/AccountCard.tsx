@@ -21,7 +21,7 @@ export default function AccountCard({ acc }: { acc: IAccount }) {
 
       {/* ── chips row ── */}
       <div className="mt-2 flex gap-2 text-xs">
-        <span className="px-2 py-1 rounded-full bg-neutral-800">MT5</span>
+        <span className="px-2 py-1 rounded-full bg-neutral-800">CGFX</span>
         <span className="px-2 py-1 rounded-full bg-neutral-800 capitalize">
           {acc.type}
         </span>
@@ -46,19 +46,11 @@ export default function AccountCard({ acc }: { acc: IAccount }) {
         >
           <button className="">Trade</button>
         </Link>
-        <button
-          className="rounded-full bg-neutral-800 py-2"
-          onClick={() => {
-            if (acc.mode === "demo") {
-              router.push(`/accounts/${acc._id}/demo-deposit`);
-            } else {
-              // আপনার রিয়েল ডিপোজিট রুট/ফ্লো
-              router.push(`/dashboard/deposit?account=${acc._id}`);
-            }
-          }}
-        >
-          Deposit
-        </button>
+        <Link href="/transfer" className="w-full">
+          <button className="rounded-full w-full bg-neutral-800 py-2">
+            Transfer
+          </button>
+        </Link>
         <button className="rounded-full bg-neutral-800 py-2">Withdraw</button>
         <button className="rounded-full bg-neutral-800 py-2">Details</button>
       </div>

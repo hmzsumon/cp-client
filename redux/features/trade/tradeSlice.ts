@@ -1,9 +1,10 @@
-/* ──────────────────────────────────────────────────────────────────────────
-   tradeSlice — selected symbol, timeframe, in-memory quotes (demo feed)
-────────────────────────────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────
+   tradeSlice — selected symbol, timeframe, chartType
+──────────────────────────────────────────────────────────── */
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type Timeframe = "1m" | "3m" | "5m" | "10m" | "15m" | "1h" | "2h";
+export type ChartType = "line" | "bars" | "candles" | "hollow";
 
 export type Quote = {
   symbol: string;
@@ -23,15 +24,16 @@ export type Instrument = {
     | "Stocks"
     | "Most"
     | "Favorites";
-  decimals: number; // 3 for XAUUSD, 5 for EURUSD etc
-  minVol: number; // 0.01
-  stepVol: number; // 0.01
-  pipValue: number; // UI info only
+  decimals: number;
+  minVol: number;
+  stepVol: number;
+  pipValue: number;
 };
 
 type TradeState = {
   symbol: string;
   tf: Timeframe;
+  chartType: ChartType; // 👈 নতুন
   quote?: Quote;
   drawerOpen: boolean;
   ticketOpen: boolean;
@@ -41,6 +43,7 @@ type TradeState = {
 const initial: TradeState = {
   symbol: "XAUUSD",
   tf: "5m",
+  chartType: "candles", // 👈 ডিফল্ট
   drawerOpen: false,
   ticketOpen: false,
   volume: 0.01,
@@ -55,6 +58,10 @@ const tradeSlice = createSlice({
     },
     setTimeframe(s, a: PayloadAction<Timeframe>) {
       s.tf = a.payload;
+    },
+    setChartType(s, a: PayloadAction<ChartType>) {
+      // 👈 নতুন অ্যাকশন
+      s.chartType = a.payload;
     },
     setQuote(s, a: PayloadAction<Quote>) {
       if (a.payload.symbol === s.symbol) s.quote = a.payload;
@@ -74,9 +81,11 @@ const tradeSlice = createSlice({
 export const {
   setSymbol,
   setTimeframe,
+  setChartType, // 👈 এটা এক্সপোর্ট করো
   setQuote,
   setDrawerOpen,
   setTicketOpen,
   setVolume,
 } = tradeSlice.actions;
+
 export default tradeSlice.reducer;
