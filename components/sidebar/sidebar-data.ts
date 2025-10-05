@@ -71,9 +71,9 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     key: "history",
-    label: "Transaction history",
+    label: "Transactions",
     icon: Clock4,
-    href: "/dashboard/history",
+    href: "/transactions",
   },
 
   {

@@ -1,7 +1,6 @@
 // FILE: app/dashboard/page.tsx
 
 "use client";
-import { ActionPill } from "@/components/dashboard/ActionPill";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { QuickActionItem } from "@/components/dashboard/QuickActionItem";
 import { RecentActivityItem } from "@/components/dashboard/RecentActivityItem";
@@ -32,20 +31,13 @@ export default function DashboardPage() {
         <BalanceCard balance={user?.m_balance ?? "0.00"} />
 
         <SectionCard
-          title="Open positions"
+          title="Total Deposits"
           right={
             <span className="text-sm font-medium text-emerald-400">
               +389.72
             </span>
           }
-        >
-          <div className="flex gap-2">
-            <ActionPill>Quick actions</ActionPill>
-            <ActionPill>→</ActionPill>
-            <ActionPill>⇄</ActionPill>
-            <ActionPill>Transfer</ActionPill>
-          </div>
-        </SectionCard>
+        ></SectionCard>
 
         <SectionCard title="Quick actions">
           <div className="space-y-3">

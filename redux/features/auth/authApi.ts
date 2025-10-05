@@ -374,6 +374,15 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    /* ────────── get my team ────────── */
+    // get my team
+    getMyTeam: builder.query<any, any>({
+      query: () => ({
+        url: `/get-my-team`,
+        method: "GET",
+      }),
+    }),
+
     /* ────────── End────────── */
   }),
 });
@@ -422,4 +431,6 @@ export const {
   useSendResetCodeMutation,
   useVerifyResetCodeMutation,
   useResetForgotPasswordMutation,
+
+  useGetMyTeamQuery,
 } = authApi;
