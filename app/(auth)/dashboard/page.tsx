@@ -1,6 +1,7 @@
 // FILE: app/dashboard/page.tsx
 
 "use client";
+import { ActionPill } from "@/components/dashboard/ActionPill";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { QuickActionItem } from "@/components/dashboard/QuickActionItem";
 import { RecentActivityItem } from "@/components/dashboard/RecentActivityItem";
@@ -37,7 +38,14 @@ export default function DashboardPage() {
               +389.72
             </span>
           }
-        ></SectionCard>
+        >
+          <div className="flex gap-2">
+            <ActionPill>Quick actions</ActionPill>
+            <ActionPill>→</ActionPill>
+            <ActionPill>⇄</ActionPill>
+            <ActionPill>Transfer</ActionPill>
+          </div>
+        </SectionCard>
 
         <SectionCard title="Quick actions">
           <div className="space-y-3">
