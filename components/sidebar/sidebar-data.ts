@@ -1,12 +1,14 @@
 // Central place to edit menu items
 import type { LucideIcon } from "lucide-react";
 import {
+  Bot,
   ChartCandlestick,
   Clock4,
   Download,
   Grid2x2,
   LifeBuoy,
   MessageSquare,
+  Network,
   Settings,
   SquareGanttChart,
   Upload,
@@ -31,6 +33,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: "My Accounts",
     icon: ChartCandlestick,
     href: "/accounts",
+  },
+  {
+    key: "ai-accounts",
+    label: "Ai Accounts",
+    icon: Bot,
+    href: "/ai-accounts",
   },
   {
     key: "positions",
@@ -66,6 +74,20 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Transaction history",
     icon: Clock4,
     href: "/dashboard/history",
+  },
+
+  {
+    key: "agent-zone",
+    label: "Agent zone",
+    icon: Network,
+
+    children: [
+      { label: "My referral", href: "/agent-zone/referral" },
+      {
+        label: "My clients",
+        href: "/agent-zone/clients",
+      },
+    ],
   },
 
   {

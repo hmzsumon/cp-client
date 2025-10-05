@@ -1,4 +1,4 @@
-import ForgotPasswordForm from "@/components/reagiter-login/ForgetPassForm";
+import ForgotPasswordForm from "@/components/register-login/ForgetPassForm";
 
 const ForgotPasswordPage = () => {
   return (

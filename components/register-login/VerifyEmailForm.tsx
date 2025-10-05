@@ -85,9 +85,9 @@ const VerifyEmailForm: React.FC<{ onSuccess?: () => void }> = ({
 
       {/* ── friendly note about the code ─────────────────────── */}
       {email && (
-        <div className="flex items-start gap-2 rounded-md border border-emerald-700/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+        <div className="flex items-start gap-2 rounded-md border border-emerald-700/40 bg-emerald-500/10 px-2 py-2 text-sm text-emerald-300">
           <Info size={16} className="mt-0.5 opacity-90" />
-          <p>
+          <p className="text-xs">
             We’ve sent a verification code to{" "}
             <span className="font-medium">{email}</span>. Please check your
             inbox (and spam folder) and enter the code below.

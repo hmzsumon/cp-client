@@ -15,32 +15,52 @@ function tick(symbol: string) {
 const PM_DEFAULT = Number(process.env.NEXT_PUBLIC_SPREAD_PM ?? 10); // fallback ‰
 
 /**
- * Binance bookTicker + kline(1m) → mid
- * তারপর target-USD (BTC→$12) থেকে per-mille বের করে bid/ask বানাই
+ * Bid-anchored pricing:
+ *  - SELL (bid) == চার্টের প্রাইস (lastClose) — ফ্যালব্যাক হিসেবে bookTicker bid/ask
+ *  - BUY (ask)  == SELL + spread
  */
 export function useUnifiedPrice(symbol: string) {
   const { data: bt } = useBinanceStream(symbol, "bookTicker");
   const { data: kl1 } = useBinanceStream(symbol, "kline_1m");
 
+  // raw feeds
   const bidRaw = bt?.b ? parseFloat(bt.b) : NaN;
   const askRaw = bt?.a ? parseFloat(bt.a) : NaN;
   const lastClose = (kl1 as any)?.k?.c ? parseFloat((kl1 as any).k.c) : NaN;
 
-  const mid =
-    Number.isFinite(bidRaw) && Number.isFinite(askRaw)
-      ? (bidRaw + askRaw) / 2
-      : lastClose;
+  // --- anchor নির্বাচন: চার্ট ক্লোজ > bid > ask
+  const anchor = Number.isFinite(lastClose)
+    ? lastClose
+    : Number.isFinite(bidRaw)
+    ? bidRaw
+    : Number.isFinite(askRaw)
+    ? askRaw
+    : NaN;
 
-  // BTC জোড়ায় ~ $12 স্প্রেড টার্গেট
+  // per-mille সেট: BTC জোড়ায় ~$12 টার্গেট, নাহলে ডিফল্ট
   let perMille: number = PM_DEFAULT;
-  if (/^BTC.*(USD|USDT)$/i.test(symbol) && Number.isFinite(mid)) {
-    perMille = perMilleFromTargetUsd(mid, 12, 0.01); // 0.01 ‰ স্টেপ
+  if (/^BTC.*(USD|USDT)$/i.test(symbol) && Number.isFinite(anchor)) {
+    perMille = perMilleFromTargetUsd(anchor, 12, 0.01); // 0.01‰ স্টেপ
   }
 
-  const { bid, ask, spreadAbs, spreadPm } = applyFixedSpread(mid, {
+  // spread (absolute) = anchor * perMille / 1000
+  // symmetric apply করার জন্য mid = anchor + spread/2
+  const sAbs = Number.isFinite(anchor) ? (anchor * perMille) / 1000 : NaN;
+  const midForApply =
+    Number.isFinite(anchor) && Number.isFinite(sAbs) ? anchor + sAbs / 2 : NaN;
+
+  const { bid, ask, spreadAbs, spreadPm } = applyFixedSpread(midForApply, {
     perMille,
     tick: tick(symbol),
   });
 
-  return { mid, bid, ask, spreadAbs, spreadPm };
+  // নিরাপত্তা: bid না মিললে (NaN হলে) পরিষ্কার NaN ফেরত
+  return {
+    // reference mid দেখাতে চাইলে এটা midForApply; নইলে anchor-ই লগিক্যাল mid
+    mid: Number.isFinite(midForApply) ? midForApply : anchor,
+    bid, // == anchor (রাউন্ডিং-সহ)
+    ask, // == anchor + spread
+    spreadAbs,
+    spreadPm,
+  };
 }

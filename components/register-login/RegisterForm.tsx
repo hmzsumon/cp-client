@@ -1,9 +1,22 @@
+/* ── RegisterForm (auto-fill + lock partnerCode from URL) ──────────────── */
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, ChevronDown, Eye, EyeOff, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Lock,
+  XCircle,
+} from "lucide-react";
+import {
+  ReadonlyURLSearchParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -18,28 +31,82 @@ import { registerSchema, type RegisterValues } from "./schemas";
 import CountrySelectPro, { iso2FromCountryName } from "./CountrySelectPro";
 import PhoneInput from "./PhoneInput";
 
-/* ── tiny rule badge ───────────────────────────────────────── */
-const Rule: React.FC<{ ok: boolean; children: React.ReactNode }> = ({
+/* ── helper: read referral code from URL (supports many variants) ───────── */
+const getReferralFromParams = (sp: ReadonlyURLSearchParams) => {
+  const keys = [
+    "referral_code",
+    "referralCode",
+    "referral",
+    "ref",
+    "partner_code",
+    "partnerCode",
+    "code",
+  ];
+
+  // ── exact keys first
+  for (const k of keys) {
+    const v = sp.get(k);
+    if (v && v.trim()) return v.trim();
+  }
+
+  // ── fuzzy fallback (no for..of; use forEach)
+  let found = "";
+  sp.forEach((v, k) => {
+    if (!found && /ref/i.test(k) && v && v.trim()) {
+      found = v.trim();
+    }
+  });
+  return found;
+};
+
+/* ── tiny rule badge (tri-state: idle | ok | error) ───────── */
+const Rule: React.FC<{ ok?: boolean; children: React.ReactNode }> = ({
   ok,
   children,
-}) => (
-  <div
-    className={`flex items-center gap-2 text-sm ${
-      ok ? "text-emerald-500" : "text-red-500"
-    }`}
-  >
-    {ok ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-    <span>{children}</span>
-  </div>
-);
+}) => {
+  const cls =
+    ok === undefined
+      ? "text-neutral-400"
+      : ok
+      ? "text-emerald-500"
+      : "text-red-500";
+  return (
+    <div className={`flex items-center gap-2 text-sm ${cls}`}>
+      {ok === undefined ? (
+        <span className="inline-block h-3 w-3 rounded-full bg-neutral-600" />
+      ) : ok ? (
+        <CheckCircle2 size={16} />
+      ) : (
+        <XCircle size={16} />
+      )}
+      <span>{children}</span>
+    </div>
+  );
+};
 
 /* ── component ─────────────────────────────────────────────── */
-const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
+const RegisterForm: React.FC<{
+  onSuccess?: () => void;
+  referralCode?: string; // optional prop; URL takes precedence if present
+}> = ({ onSuccess, referralCode }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [registerUser, { isLoading }] = useRegisterUserMutation();
 
   const [showPwd, setShowPwd] = useState(false);
   const [showCPwd, setShowCPwd] = useState(false);
+
+  // ── compute referral code from URL (memoized)
+  const codeFromUrl = useMemo(
+    () => getReferralFromParams(searchParams),
+    [searchParams]
+  );
+
+  // ── final referral to use (URL > prop > empty)
+  const effectiveReferral = codeFromUrl || referralCode || "";
+  const lockPartnerCode = Boolean(codeFromUrl); // lock only if came from URL
+
+  // console.debug("RegisterForm: effectiveReferral =", { codeFromUrl, referralCode, effectiveReferral });
 
   const {
     register,
@@ -47,7 +114,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
     watch,
     handleSubmit,
     setValue,
-    formState: { errors },
+    formState: { errors, touchedFields, submitCount },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     mode: "onTouched",
@@ -63,9 +130,21 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
     },
   });
 
+  /* ── write partnerCode into form when available ─────────── */
+  useEffect(() => {
+    if (effectiveReferral) {
+      setValue("partnerCode", effectiveReferral, {
+        shouldValidate: true,
+        shouldDirty: false,
+      });
+    }
+  }, [effectiveReferral, setValue]);
+
   /* ── live stats for password helper ──────────────────────── */
   const pwd = watch("password", "");
   const countryValue = watch("country");
+  const isPwdActive =
+    !!touchedFields.password || pwd.length > 0 || submitCount > 0;
 
   const pwdStats = useMemo(
     () => ({
@@ -90,7 +169,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
       const email = values.email.trim().toLowerCase();
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (e: any) {
-      toast.error(e?.data?.message || "Registration failed", { id: tId });
+      toast.error(e?.data?.error || "Registration failed", { id: tId });
     }
   });
 
@@ -151,7 +230,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         <div className="relative">
           <Input
             type={showPwd ? "text" : "password"}
-            placeholder="••••••••"
+            placeholder="e.g. Abc123@"
             {...register("password")}
             className="pr-9"
             autoComplete="new-password"
@@ -166,14 +245,20 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
           </button>
         </div>
 
-        {/* ── password rules ─────────────────────────────────── */}
+        {/* ── password rules (neutral before interaction) ───── */}
         <div className="mt-2 space-y-1">
-          <Rule ok={pwdStats.len}>Between 8–15 characters</Rule>
-          <Rule ok={pwdStats.upper && pwdStats.lower}>
+          <Rule ok={isPwdActive ? pwdStats.len : undefined}>
+            Between 8–15 characters
+          </Rule>
+          <Rule ok={isPwdActive ? pwdStats.upper && pwdStats.lower : undefined}>
             At least one upper and one lower case letter
           </Rule>
-          <Rule ok={pwdStats.num}>At least one number</Rule>
-          <Rule ok={pwdStats.special}>At least one special character</Rule>
+          <Rule ok={isPwdActive ? pwdStats.num : undefined}>
+            At least one number
+          </Rule>
+          <Rule ok={isPwdActive ? pwdStats.special : undefined}>
+            At least one special character
+          </Rule>
         </div>
       </Field>
 
@@ -182,7 +267,7 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         <div className="relative">
           <Input
             type={showCPwd ? "text" : "password"}
-            placeholder="••••••••"
+            placeholder="e.g. Abc123@"
             {...register("confirmPassword")}
             className="pr-9"
             autoComplete="new-password"
@@ -198,17 +283,38 @@ const RegisterForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         </div>
       </Field>
 
-      {/* ── partner code (optional) ─────────────────────────── */}
+      {/* ── partner code (auto-filled + readOnly when URL has code) ────────── */}
       <details className="rounded-lg border border-neutral-800 p-3 open:bg-neutral-900/40">
         <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-neutral-200">
-          <span>Partner code (optional)</span>
-          <ChevronDown size={16} />
+          <span>
+            {lockPartnerCode
+              ? "Partner code (auto-filled from link)"
+              : "Partner code (optional)"}
+          </span>
+          {lockPartnerCode ? (
+            <Lock size={16} className="text-neutral-400" />
+          ) : (
+            <ChevronDown size={16} />
+          )}
         </summary>
+
         <div className="pt-3">
           <Input
             placeholder="Enter partner code"
             {...register("partnerCode")}
+            readOnly={lockPartnerCode} /* ── lock editing ── */
+            className={
+              lockPartnerCode ? "cursor-not-allowed opacity-90" : undefined
+            }
+            title={
+              lockPartnerCode ? "Pre-filled from referral link" : undefined
+            }
           />
+          {lockPartnerCode ? (
+            <p className="mt-1 text-xs text-neutral-400">
+              This code was pre-filled from your referral link.
+            </p>
+          ) : null}
         </div>
       </details>
 

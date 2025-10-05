@@ -13,6 +13,7 @@ import storage from "redux-persist/lib/storage";
 
 import depositMethodReducer from "./depositMethodSlice";
 import accountUIReducer from "./features/account/accountUISlice";
+import aiAccountUIReducer from "./features/ai-account/ai-accountUISlice";
 import { apiSlice } from "./features/api/apiSlice";
 import authReducer from "./features/auth/authSlice";
 import kycReducer from "./features/kyc/kycSlice";
@@ -45,6 +46,7 @@ export const rootReducer = combineReducers({
   accountUI: accountUIReducer,
   kyc: kycReducer,
   trade: tradeReducer,
+  aiAccountUI: aiAccountUIReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

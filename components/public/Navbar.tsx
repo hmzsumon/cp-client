@@ -37,7 +37,10 @@ const Navbar: React.FC = () => (
       </nav>
 
       <div className="flex items-center gap-3">
-        <Link href="/register-login">
+        <Link
+          href={{ pathname: "/register-login", query: { tab: "signin" } }}
+          scroll={false}
+        >
           <Button
             as="span"
             className="border border-neutral-800 bg-neutral-900 text-neutral-200"
@@ -46,7 +49,10 @@ const Navbar: React.FC = () => (
           </Button>
         </Link>
 
-        <Link href="/register-login">
+        <Link
+          href={{ pathname: "/register-login", query: { tab: "create" } }}
+          scroll={false}
+        >
           <Button
             as="span"
             className="bg-gradient-to-r from-emerald-400 to-cyan-500 text-neutral-950"

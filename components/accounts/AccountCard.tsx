@@ -21,12 +21,12 @@ export default function AccountCard({ acc }: { acc: IAccount }) {
 
       {/* ── chips row ── */}
       <div className="mt-2 flex gap-2 text-xs">
-        <span className="px-2 py-1 rounded-full bg-neutral-800">CGFX</span>
-        <span className="px-2 py-1 rounded-full bg-neutral-800 capitalize">
+        <span className="px-2 py-1 rounded-lg bg-neutral-800">CGFX</span>
+        <span className="px-2 py-1 rounded-lg bg-neutral-800 capitalize">
           {acc.type}
         </span>
         {/* ✅ status নয়; mode দেখাই, closed হলে 'Closed' */}
-        <span className="px-2 py-1 rounded-full bg-neutral-800">
+        <span className="px-2 py-1 rounded-lg bg-neutral-800">
           {acc.status !== "active"
             ? "Closed"
             : acc.mode === "demo"
@@ -42,17 +42,31 @@ export default function AccountCard({ acc }: { acc: IAccount }) {
       <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
         <Link
           href="/trade"
-          className="rounded-full bg-yellow-400 text-black py-2 font-medium"
+          className="rounded-lg bg-yellow-400 text-black py-2 font-medium"
         >
           <button className="">Trade</button>
         </Link>
         <Link href="/transfer" className="w-full">
-          <button className="rounded-full w-full bg-neutral-800 py-2">
+          <button className="rounded-lg w-full bg-neutral-800 py-2">
             Transfer
           </button>
         </Link>
-        <button className="rounded-full bg-neutral-800 py-2">Withdraw</button>
-        <button className="rounded-full bg-neutral-800 py-2">Details</button>
+        <button className="rounded-lg bg-neutral-800 py-2">Withdraw</button>
+        <button className="rounded-lg bg-neutral-800 py-2">Details</button>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
+        <Link
+          href="/trade"
+          className="rounded-lg bg-yellow-400 text-black py-2 font-medium"
+        >
+          <button className="">Open</button>
+        </Link>
+        <Link href="/transfer" className="w-full">
+          <button className="rounded-lg w-full bg-neutral-800 py-2">
+            Closed
+          </button>
+        </Link>
       </div>
     </div>
   );

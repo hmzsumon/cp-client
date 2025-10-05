@@ -1,6 +1,6 @@
 import CapitaliseLogo from "@/components/branding/CapitaliseLogo";
 import GlowBackdrop from "@/components/decor/GlowBackdrop";
-import BackgroundFX from "@/components/reagiter-login/BackgroundFX";
+import BackgroundFX from "@/components/register-login/BackgroundFX";
 import Link from "next/link";
 import React from "react";
 
