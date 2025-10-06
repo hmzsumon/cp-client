@@ -65,7 +65,7 @@ export const NAV_ITEMS: NavItem[] = [
       { label: "P2P", href: "/wallet/p2p" },
       {
         label: "Internal Transfer",
-        href: "/wallet/transfer",
+        href: "/transfer",
       },
     ],
   },

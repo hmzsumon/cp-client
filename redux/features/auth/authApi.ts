@@ -189,7 +189,7 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // get dashboard data
+    /* ────────── Get dashboard data ────────── */
     getDashboard: builder.query<any, any>({
       query: () => ({
         url: `/dashboard-data`,

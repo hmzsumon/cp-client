@@ -5,6 +5,14 @@ import { useState } from "react";
 interface TradeHistoryCardProps {
   record: any;
   isLiveTrade: boolean;
+  type: string;
+  status: string;
+  amount: number;
+  currency: string;
+  method: string;
+  time: string;
+  orderId: string;
+  onCopy: (value: string) => void;
 }
 
 const TransactionCard = ({ record, isLiveTrade }: TradeHistoryCardProps) => {

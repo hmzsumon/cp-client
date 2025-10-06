@@ -1,7 +1,6 @@
 export type Activity = {
   id: string;
   title: string;
-  date: string;
   amount: number;
   currency?: string;
 };
