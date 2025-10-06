@@ -2,76 +2,71 @@
 
 import { useState } from "react";
 
-interface TradeHistoryCardProps {
-  record: any;
-  isLiveTrade: boolean;
-  type: string;
-  status: string;
+/* ── type: single transaction record ────────────────────────────────────── */
+export interface TransactionRecord {
+  unique_id: string;
+  isCashIn: boolean;
+  purpose: string;
   amount: number;
-  currency: string;
-  method: string;
-  time: string;
-  orderId: string;
-  onCopy: (value: string) => void;
+  description?: string;
+  createdAt: string | Date;
+  currency?: string; // optional, fallback to USDT
 }
 
-const TransactionCard = ({ record, isLiveTrade }: TradeHistoryCardProps) => {
+/* ── props: only record ─────────────────────────────────────────────────── */
+interface TransactionCardProps {
+  record: TransactionRecord;
+}
+
+const TransactionCard = ({ record }: TransactionCardProps) => {
   const [showDetail, setShowDetail] = useState(false);
 
-  const isSuccess = record.isCashIn;
+  const isSuccess = !!record.isCashIn;
   const resultColor = isSuccess ? "text-green-600" : "text-red-500";
-  const profitPrefix = isSuccess ? "+" : "-";
+  const currency = record.currency || "USDT";
 
   return (
     <div className="border-b py-3 px-4">
-      {/* Summary Header */}
+      {/* ── summary header ───────────────────────────────────────────────── */}
       <div
-        className="flex justify-between items-center cursor-pointer"
+        className="flex cursor-pointer items-center justify-between"
         onClick={() => setShowDetail(!showDetail)}
       >
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <button
               className={`${
-                record.isCashIn ? "bg-green-500" : "bg-red-500"
-              } text-white text-xs rounded  py-1 w-[65px] flex items-center justify-center`}
+                isSuccess ? "bg-green-500" : "bg-red-500"
+              } flex w-[80px] items-center justify-center rounded py-1 text-xs text-white`}
             >
-              {record.isCashIn ? "Cash In" : "Cash Out"}
+              {isSuccess ? "Cash In" : "Cash Out"}
             </button>
           </div>
+
           <div className="text-xs">
-            <p className="font-semibold space-x-2">
+            <p className="space-x-2 font-semibold">
               <span>{record.unique_id}</span>
             </p>
-            <p className="text-gray-500 text-xs">
+            <p className="text-xs text-gray-500">
               {new Date(record.createdAt).toLocaleString()}
             </p>
           </div>
         </div>
-        {isLiveTrade ? (
-          <div className="text-right">
-            <p className={`text-xs ${resultColor} font-bold`}>
-              {record.purpose}
-            </p>
-            <p className={`${resultColor} text-xs font-bold`}>
-              {!record.amount ? "0.00" : Math.abs(record.amount).toFixed(2)} $
-            </p>
-          </div>
-        ) : (
-          <div className="text-right">
-            <p className={`text-xs ${resultColor} font-bold`}>
-              {record.purpose}
-            </p>
-            <p className={`${resultColor} text-xs font-bold`}>
-              {!record.amount ? "---" : Math.abs(record.amount).toFixed(2)} $
-            </p>
-          </div>
-        )}
+
+        <div className="text-right">
+          <p className={`text-xs font-bold ${resultColor}`}>{record.purpose}</p>
+          <p className={`${resultColor} text-xs font-bold`}>
+            {Number.isFinite(record.amount)
+              ? Math.abs(record.amount).toFixed(2)
+              : "---"}{" "}
+            {currency}
+          </p>
+        </div>
       </div>
 
-      {/* Details */}
+      {/* ── details ──────────────────────────────────────────────────────── */}
       {showDetail && (
-        <div className="bg-gray-50 mt-3 rounded-lg p-3 text-xs space-y-1">
+        <div className="mt-3 space-y-1 rounded-lg bg-gray-50 p-3 text-xs">
           <div className="flex justify-between">
             <span className="text-gray-500">Record Id</span>
             <span>{record.unique_id}</span>
@@ -79,21 +74,32 @@ const TransactionCard = ({ record, isLiveTrade }: TradeHistoryCardProps) => {
 
           <div className="flex justify-between">
             <span className="text-gray-500">Amount</span>
-            <span>${record.amount.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">purpose</span>
-            <span>{record.purpose}</span>
-          </div>
-          <div className="flex flex-col justify-between gap-1">
-            <span className="text-gray-500">Description</span>
-            <span className="text-[.70rem] self-end">{record.description}</span>
+            <span>
+              {Number.isFinite(record.amount)
+                ? record.amount.toFixed(2)
+                : "0.00"}{" "}
+              {currency}
+            </span>
           </div>
 
           <div className="flex justify-between">
-            <span className={`${resultColor} `}>Status</span>
+            <span className="text-gray-500">Purpose</span>
+            <span>{record.purpose}</span>
+          </div>
+
+          {record.description ? (
+            <div className="flex flex-col justify-between gap-1">
+              <span className="text-gray-500">Description</span>
+              <span className="self-end text-[.70rem]">
+                {record.description}
+              </span>
+            </div>
+          ) : null}
+
+          <div className="flex justify-between">
+            <span className={resultColor}>Status</span>
             <span className={resultColor}>
-              {record.isCashIn ? "Cash In" : "Cash Out"}
+              {isSuccess ? "Cash In" : "Cash Out"}
             </span>
           </div>
 
