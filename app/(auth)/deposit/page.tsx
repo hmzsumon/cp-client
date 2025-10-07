@@ -9,9 +9,7 @@ import DepositItemCard, {
 } from "@/components/deposit/DepositItemCard";
 
 // ── import svg icons as React components (SVGR) ──────────────
-import BinanceIcon from "@/public/images/deposit/binance.svg";
 import BtcIcon from "@/public/images/deposit/bitcoin.svg";
-import BkashIcon from "@/public/images/deposit/bkash.svg";
 import CardIcon from "@/public/images/deposit/card.svg";
 import EthIcon from "@/public/images/deposit/ethereum.svg";
 import UsdtIcon from "@/public/images/deposit/usdt-trc20.svg";
@@ -29,29 +27,7 @@ const ALL_ITEMS: DepositItem[] = [
     status: "available",
     tags: ["Crypto", "TRON"],
   },
-  {
-    key: "binance-pay",
-    name: "BinancePay",
-    Icon: BinanceIcon,
-    colorClass: "text-neutral-300",
-    processing: "Instant – 30 minutes",
-    fee: "0%",
-    limits: "10 – 20,000 USD",
-    status: "unavailable",
-    tags: ["Crypto", "Wallet"],
-  },
 
-  {
-    key: "bkash",
-    name: "bKash",
-    Icon: BkashIcon,
-    colorClass: "text-pink-400",
-    processing: "Instant – 30 minutes",
-    fee: "0%",
-    limits: "10 – 300 USD",
-    status: "unavailable",
-    tags: ["Local", "BD"],
-  },
   {
     key: "bank-card",
     name: "Bank Card",
@@ -122,16 +98,10 @@ export default function DepositPage() {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/learn/deposit"
-            className="rounded-lg border border-emerald-700/30 bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-300 hover:bg-emerald-500/15"
-          >
-            Learn more
-          </Link>
-          <Link
-            href="/settings/profile"
+            href="/deposit-history"
             className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-neutral-950 hover:bg-emerald-400"
           >
-            Complete profile
+            History
           </Link>
         </div>
       </div>

@@ -30,21 +30,10 @@ export default function SetupAccount({
   return (
     <div className="p-4">
       {/* Mode toggle */}
-      <div className="grid grid-cols-2 gap-2 bg-neutral-900 border border-neutral-800 rounded-xl p-1">
-        {(["real", "demo"] as const).map((m) => (
-          <button
-            key={m}
-            onClick={() => onChange({ ...value, mode: m })}
-            className={`py-2 rounded-lg ${
-              value.mode === m
-                ? "bg-yellow-400 text-black font-semibold"
-                : "text-neutral-300"
-            }`}
-          >
-            {m[0].toUpperCase() + m.slice(1)}
-          </button>
-        ))}
-      </div>
+
+      <button className="btn-gradient btn-flex-1 w-full font-semibold">
+        Live Account
+      </button>
 
       {/* Selectors */}
       <div className="mt-4 rounded-2xl bg-neutral-900 border border-neutral-800 divide-y divide-neutral-800">
@@ -53,16 +42,8 @@ export default function SetupAccount({
           value={value.type === "pro" ? "Pro" : "Standard"}
           rightBadge={value.type === "pro" ? "Pro" : undefined}
         />
-        <Row
-          label="Currency"
-          value={value.currency}
-          onClick={() => setShowCurrency(true)}
-        />
-        <Row
-          label="Execution type"
-          value={value.execution === "market" ? "Market" : "Instant"}
-          onClick={() => setShowExec(true)}
-        />
+        <Row label="Currency" value="USDT" />
+        <Row label="Execution type" value="Market" />
         <Row
           label="Max leverage"
           value={
@@ -72,7 +53,7 @@ export default function SetupAccount({
           }
           onClick={() => setShowLev(true)}
         />
-        <Row label="Platform" value={value.platform} />
+        <Row label="Platform" value="CGFX" />
         <Row
           label="Nickname"
           value={value.nickname ?? "Optional"}
@@ -89,7 +70,7 @@ export default function SetupAccount({
           Back
         </button>
         <button
-          className="flex-1 py-3 rounded-xl bg-yellow-400 text-black font-semibold"
+          className="btn-gradient btn-flex-1 w-full font-semibold"
           onClick={onContinue}
         >
           Continue

@@ -35,8 +35,8 @@ export interface KycState {
 
 const initialState: KycState = {
   step: "entry",
-  firstName: "Zakaria",
-  lastName: "Sumon",
+  firstName: "",
+  lastName: "",
   residenceCountry: "Bangladesh",
   issuingCountry: "Bangladesh",
   docType: "id",

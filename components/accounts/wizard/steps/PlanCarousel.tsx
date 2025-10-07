@@ -20,7 +20,7 @@ export default function PlanCarousel({
       title: "Standard",
       subtitle: "Smaller lots, lower risk. Great for practicing.",
       rows: [
-        ["Min deposit", "10 USD"],
+        ["Min deposit", "10 USDT"],
         ["Min spread", "0.2 pips"],
         ["Max leverage", "1:Unlimited"],
         ["Commission", "No commission"],
@@ -31,7 +31,7 @@ export default function PlanCarousel({
       title: "Pro",
       subtitle: "Instant or market execution with tighter spreads.",
       rows: [
-        ["Min deposit", "200 USD"],
+        ["Min deposit", "200 USDT"],
         ["Min spread", "0.1 pips"],
         ["Max leverage", "1:Unlimited"],
         ["Commission", "No commission"],
@@ -77,7 +77,7 @@ export default function PlanCarousel({
       <div className="p-2" />
 
       <button
-        className="w-full py-3 rounded-xl bg-yellow-400 text-black font-semibold"
+        className="btn-gradient btn-flex-1 w-full font-semibold"
         onClick={() => onContinue(active.key)}
       >
         Continue

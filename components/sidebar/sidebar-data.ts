@@ -7,7 +7,6 @@ import {
   Download,
   Grid2x2,
   LifeBuoy,
-  MessageSquare,
   Network,
   Settings,
   SquareGanttChart,
@@ -30,7 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", label: "Dashboard", icon: Grid2x2, href: "/dashboard" },
   {
     key: "accounts",
-    label: "My Accounts",
+    label: "Live Accounts",
     icon: ChartCandlestick,
     href: "/accounts",
   },
@@ -40,20 +39,20 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Bot,
     href: "/ai-accounts",
   },
-  {
-    key: "positions",
-    label: "My Positions",
-    icon: ChartCandlestick,
+  // {
+  //   key: "positions",
+  //   label: "My Positions",
+  //   icon: ChartCandlestick,
 
-    children: [
-      { label: "Open", href: "/positions" },
+  //   children: [
+  //     { label: "Open", href: "/positions" },
 
-      {
-        label: "Closed",
-        href: "/closed-positions",
-      },
-    ],
-  },
+  //     {
+  //       label: "Closed",
+  //       href: "/closed-positions",
+  //     },
+  //   ],
+  // },
   { key: "deposit", label: "Deposit", icon: Download, href: "/deposit" },
   { key: "withdraw", label: "Withdraw", icon: Upload, href: "/withdraw" },
   {
@@ -62,7 +61,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Wallet,
 
     children: [
-      { label: "P2P", href: "/wallet/p2p" },
+      { label: "Send USDT", href: "/wallet/p2p" },
       {
         label: "Internal Transfer",
         href: "/transfer",
@@ -83,10 +82,10 @@ export const NAV_ITEMS: NavItem[] = [
 
     children: [
       { label: "My referral", href: "/agent-zone/referral" },
-      {
-        label: "My clients",
-        href: "/agent-zone/clients",
-      },
+      // {
+      //   label: "My clients",
+      //   href: "/agent-zone/clients",
+      // },
     ],
   },
 
@@ -104,18 +103,18 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
-  {
-    key: "chat",
-    label: "Live Chat",
-    icon: MessageSquare,
-    href: "/dashboard/chat",
-    section: "bottom",
-  },
+  // {
+  //   key: "chat",
+  //   label: "Live Chat",
+  //   icon: MessageSquare,
+  //   href: "/dashboard/chat",
+  //   section: "bottom",
+  // },
   {
     key: "support",
     label: "Support",
     icon: LifeBuoy,
-    href: "/dashboard/support",
+    href: "/support",
   },
 ];
 

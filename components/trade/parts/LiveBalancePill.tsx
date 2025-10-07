@@ -99,7 +99,7 @@ export default function LiveBalancePill({
             <span className="font-medium opacity-80">live</span>
           </span>
         ) : (
-          <span className="font-semibold">{fmt(equity, 2)} USD</span>
+          <span className="font-semibold">{fmt(equity, 2)} USDT</span>
         )}
       </div>
     </>

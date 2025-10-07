@@ -26,7 +26,7 @@ export default function NicknameSheet({
         </p>
         <input
           className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 outline-none"
-          placeholder="My Pro MT5"
+          placeholder="Your Nickname"
           value={val}
           onChange={(e) => setVal(e.target.value)}
         />
@@ -41,7 +41,7 @@ export default function NicknameSheet({
             Cancel
           </button>
           <button
-            className="flex-1 py-3 rounded-xl bg-yellow-400 text-black font-semibold disabled:opacity-50"
+            className="btn-gradient btn-flex-1 w-full font-semibold disabled:opacity-50"
             disabled={!ok}
             onClick={() => onSave(val)}
           >

@@ -39,7 +39,7 @@ export default function PnlBadge({
         </span>
       ) : (
         <span className="text-xs font-semibold">
-          {(pos ? "+" : "") + fmt(value, 2)} USD
+          {(pos ? "+" : "") + fmt(value, 2)} USDT
         </span>
       )}
 

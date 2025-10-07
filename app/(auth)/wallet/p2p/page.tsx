@@ -26,7 +26,7 @@ const TransferPage = () => {
     // 	be eligible for transfer. (This value reflects your personal trade
     // 	volume).
     // </>,
-    "Minimum transfer amount is $10.",
+    "Minimum transfer amount is 5 USDT.",
     "You can transfer balance only to valid registered users of this platform.",
     "Once transferred, the balance cannot be reversed or refunded.",
     "Please double-check the Receiver’s User ID before confirming the transfer.",
@@ -94,7 +94,7 @@ const TransferPage = () => {
       setAmountErrorMessage("Minimum transfer amount is 10 USDT");
       return;
     }
-    const calculatedFee = num * 0.03;
+    const calculatedFee = num * 0.02;
     setFee(calculatedFee);
     setReceiveAmount(num - calculatedFee);
   };
@@ -212,7 +212,7 @@ const TransferPage = () => {
                 <div className="flex justify-between">
                   <small className="text-xs text-green-500">
                     {fee > 0 ? (
-                      <span>3% fee: {formatBalance(fee || 0)} USDT</span>
+                      <span>2% fee: {formatBalance(fee || 0)} USDT</span>
                     ) : (
                       <span>(3% fee will be charged.)</span>
                     )}

@@ -61,7 +61,7 @@ function badge(n: number) {
 
 export default function PositionsPanel() {
   const [tab, setTab] = useState<"open" | "closed">("open");
-  const { count } = useFilteredOpenPositions(); // 👈 এখানে থেকে কাউন্ট
+  const { count } = useFilteredOpenPositions();
 
   return (
     <div className="mt-4 rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-3">

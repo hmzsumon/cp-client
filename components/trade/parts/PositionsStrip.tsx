@@ -39,7 +39,7 @@ export default function PositionsStrip({
       <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/positions" className="font-medium">
+            <Link href="/accounts" className="font-medium">
               <button className="py-1.5 rounded-lg px-2 bg-neutral-800 text-xs">
                 Open <b className="ml-1">{openCount}</b>
               </button>

@@ -1,18 +1,20 @@
 /* components/trade/OrderPanel.tsx */
 "use client";
 
-import { useUnifiedPrice } from "@/hooks/useUnifiedPrice"; // ✅ একক সোর্স
+/* ────────── deps ────────── */
+import { useUnifiedPrice } from "@/hooks/useUnifiedPrice";
 import { usePlaceMarketOrderMutation } from "@/redux/features/trade/tradeApi";
 import { ChangeEvent, KeyboardEvent, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
-/* UI symbol → Binance raw */
+/* ────────── symbol helpers ────────── */
 function toBinanceSymbol(sym: string) {
   let s = sym.replace("/", "").toUpperCase();
-  if (s.endsWith("USD")) s = s.replace("USD", "USDT"); // ETH/USD → ETHUSDT
+  if (s.endsWith("USD")) s = s.replace("USD", "USDT");
   return s;
 }
 
-/* helpers for lots */
+/* ────────── lots helpers ────────── */
 function clampLots(v: number) {
   if (!Number.isFinite(v)) return 0.01;
   return Math.max(0.01, +v.toFixed(2));
@@ -24,6 +26,7 @@ function subLots(v: number, d = 0.01) {
   return clampLots(v - d);
 }
 
+/* ────────── component ────────── */
 export default function OrderPanel({
   symbol: uiSymbol,
   account,
@@ -33,7 +36,7 @@ export default function OrderPanel({
 }) {
   const symbol = toBinanceSymbol(uiSymbol);
 
-  // ✅ unified mid/bid/ask (BTC→ ~ $12+ স্প্রেড অটো সেট হয়)
+  // ✅ unified mid/bid/ask
   const { mid, bid, ask, spreadAbs, spreadPm } = useUnifiedPrice(symbol);
 
   const [lots, setLots] = useState(0.01);
@@ -46,18 +49,18 @@ export default function OrderPanel({
 
   const leverage = account?.leverage ?? 200;
   const contractSize = useMemo(
-    () => (symbol.includes("XAU") ? 100 : 1), // ⚠️ Crypto = 1
+    () => (symbol.includes("XAU") ? 100 : 1), // crypto = 1
     [symbol]
   );
   const notional = (mid || 0) * contractSize * lots;
   const margin = leverage ? notional / leverage : 0;
 
-  const pxForSide = side === "buy" ? ask : bid; // ✅ unified bid/ask
+  const pxForSide = side === "buy" ? ask : bid;
   const canTrade = !!account && lots > 0 && Number.isFinite(pxForSide);
 
   const fmt = (n: number) => (Number.isFinite(n) ? n.toFixed(dp) : "–");
 
-  /* lots input handlers */
+  /* ── lots input handlers ───────────────────────────────── */
   const onLotsChange = (e: ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^\d.]/g, "");
     const parts = raw.split(".");
@@ -86,39 +89,48 @@ export default function OrderPanel({
     }
   };
 
+  /* ── confirm place ─────────────────────────────────────── */
   async function onConfirm() {
     if (!canTrade || submitting) return;
+
+    const hint = `${side.toUpperCase()} ${lots.toFixed(2)} ${symbol} @ ${fmt(
+      pxForSide
+    )}`;
+    const toastId = toast.loading(`Placing order… ${hint}`);
+
     try {
       setSubmitting(true);
+
       const res = await place({
         accountId: account._id,
         symbol, // Binance raw
-        side,
-        lots,
+        side, // "buy" | "sell"
+        lots, // volume
         price: pxForSide, // client hint
       }).unwrap();
 
+      // ── optional DOM events you already had
       window.dispatchEvent(
         new CustomEvent("position:opened", {
           detail: { position: res.position },
         })
       );
-      window.dispatchEvent(
-        new CustomEvent("toast", {
-          detail: { kind: "success", text: "Order placed" },
-        })
-      );
+
+      // ✅ success toast
+      toast.success(`Order placed ✓ ${hint}`, { id: toastId });
     } catch (err: any) {
-      window.alert?.(err?.data?.message || "Failed to place order");
+      // ❌ error toast
+      const msg = err?.data?.error || "Failed to place order";
+      toast.error(msg, { id: toastId });
     } finally {
       setSubmitting(false);
     }
   }
 
+  /* ────────── render ────────── */
   return (
-    <div className="relative rounded-t-lg bg-neutral-950 border-t border-neutral-800 p-3">
-      {/* ছোট রিবন: স্প্রেড ইনফো */}
-      <div className="absolute -top-3 right-2 text-[10px] px-2 py-0.5 rounded bg-neutral-800 border border-neutral-700">
+    <div className="relative border-t border-neutral-800 bg-neutral-950 p-3 rounded-t-lg">
+      <div className="absolute -top-3 right-2 rounded border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-[10px]">
         spread ~ {Number.isFinite(spreadAbs) ? spreadAbs.toFixed(dp) : "–"} (
         {Number.isFinite(spreadPm) ? spreadPm.toFixed(2) : "–"}‰)
       </div>
@@ -126,7 +138,7 @@ export default function OrderPanel({
       {/* Volume (lots) */}
       <div>
         <div className="mb-1 text-sm text-neutral-400">Volume (lots)</div>
-        <div className="flex rounded-xl bg-neutral-900 border border-neutral-800 overflow-hidden">
+        <div className="flex overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
           <button
             type="button"
             className="px-4 py-2 text-xl hover:bg-neutral-800"
@@ -146,7 +158,7 @@ export default function OrderPanel({
             onChange={onLotsChange}
             onBlur={onLotsBlur}
             onKeyDown={onLotsKey}
-            className="flex-1 bg-transparent text-center outline-none py-2 font-semibold"
+            className="flex-1 bg-transparent py-2 text-center font-semibold outline-none"
             aria-label="Lots"
           />
 
@@ -167,8 +179,8 @@ export default function OrderPanel({
         </div>
       </div>
 
-      {/* Sell / Buy with center spread chip */}
-      <div className="mt-3 relative">
+      {/* Sell / Buy */}
+      <div className="relative mt-3">
         <div className="grid grid-cols-2 gap-3">
           <button
             className={`rounded-xl py-3 font-semibold ${
@@ -188,14 +200,9 @@ export default function OrderPanel({
           </button>
         </div>
 
-        {/* spread chip (Exness-style; position: relative container) */}
+        {/* spread chip */}
         <div
-          className="
-            pointer-events-none absolute top-3 left-1/2 -translate-x-1/2
-            z-10 rounded-md border border-neutral-800
-            bg-neutral-900 px-2 py-0.5 text-[12px] font-semibold
-            text-neutral-300 shadow
-          "
+          className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-md border border-neutral-800 bg-neutral-900 px-2 py-0.5 text-[12px] font-semibold text-neutral-300 shadow"
           title="Spread (Ask − Bid)"
         >
           {Number.isFinite(spreadAbs) ? spreadAbs.toFixed(dp) : "—"}
@@ -207,9 +214,9 @@ export default function OrderPanel({
         <button
           disabled={!canTrade || isLoading || submitting}
           onClick={onConfirm}
-          className={`w-full rounded-xl text-sm py-2.5 font-semibold ${
+          className={`w-full rounded-xl py-2.5 text-sm font-semibold ${
             side === "sell" ? "bg-red-600" : "bg-blue-600"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          } disabled:cursor-not-allowed disabled:opacity-50`}
         >
           {submitting ? (
             "Placing…"

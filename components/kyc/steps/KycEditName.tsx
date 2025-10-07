@@ -12,6 +12,8 @@ export default function KycEditName() {
   const [first, setFirst] = useState(firstName);
   const [last, setLast] = useState(lastName);
 
+  const { user } = useSelector((s: RootState) => s.auth);
+
   return (
     <form
       onSubmit={(e) => {

@@ -136,7 +136,7 @@ export default function TradeScreen({ account }: { account: any }) {
       {showFs && (
         <ChartFullscreen
           symbol={symbol}
-          interval={"5m"} // চাইলে redux tf পাঠাতে পারো
+          interval={"5m"}
           onClose={() => setShowFs(false)}
         />
       )}

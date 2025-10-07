@@ -375,6 +375,31 @@ input::selection {
   background: transparent; /* নির্বাচিত টেক্সটের highlight */
 }
 
+/* ── button utilities ─────────────────────────────────────── */
+@layer components {
+  .btn-gradient {
+    @apply rounded-lg bg-gradient-to-r from-emerald-400 to-cyan-500
+           font-semibold text-neutral-950 py-3
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* optional: width helpers */
+  .btn-w-full {
+    @apply w-full;
+  }
+  .btn-flex-1 {
+    @apply flex-1;
+  }
+
+  /* optional: hover/focus states */
+  .btn-gradient:hover {
+    @apply opacity-90;
+  }
+  .btn-gradient:focus-visible {
+    @apply outline-none ring-2 ring-emerald-400/40;
+  }
+}
+
 /* ────────── Login BTN Css ────────── */
 .login_btn {
   display: flex;

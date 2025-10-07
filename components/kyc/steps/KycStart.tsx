@@ -10,6 +10,8 @@ export default function KycStart() {
     (s: any) => s.kyc
   );
 
+  const { user } = useSelector((s: any) => s.auth);
+
   return (
     <div className="space-y-6">
       <div>
@@ -28,7 +30,7 @@ export default function KycStart() {
       <div>
         <div className="text-sm text-neutral-400">Check your name:</div>
         <div className="mt-1 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2">
-          {firstName} {lastName}
+          {user?.name}
         </div>
         <button
           onClick={() => d(go("editName"))}
