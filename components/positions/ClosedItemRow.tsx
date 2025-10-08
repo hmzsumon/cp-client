@@ -39,15 +39,21 @@ export default function ClosedItemRow({
           </div>
         </div>
 
-        <div
-          className={[
-            "rounded-md px-2 py-1 text-xs font-semibold",
-            pnlPos
-              ? "bg-green-700/15 text-green-400"
-              : "bg-red-700/15 text-red-400",
-          ].join(" ")}
-        >
-          {(pnlPos ? "+" : "") + fmt(item.pnl, 2)} USD
+        <div>
+          <div
+            className={[
+              "rounded-md px-2 py-1 text-xs font-semibold",
+              pnlPos
+                ? "bg-green-700/15 text-green-400"
+                : "bg-red-700/15 text-red-400",
+            ].join(" ")}
+          >
+            <span>{(pnlPos ? "+" : "") + fmt(item.pnl, 2)} USDT</span>
+          </div>
+          <div className="rounded-md px-2 py-1 text-xs font-semibold">
+            {" "}
+            <span className="text-neutral-400"> {fmt(item.closePrice, 2)}</span>
+          </div>
         </div>
       </div>
     </button>

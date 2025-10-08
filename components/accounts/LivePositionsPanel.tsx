@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import ClosedList from "./LiveClosedList";
-import OpenList from "./LiveOpenList";
+import LiveClosedList from "./LiveClosedList";
+import LiveOpenList from "./LiveOpenList";
 import type { Position } from "./types";
 
 // const demoClosed: Position[] = [
@@ -99,7 +99,7 @@ export default function LivePositionsPanel() {
       </div>
 
       {/* Body */}
-      {tab === "open" ? <OpenList /> : <ClosedList items={demoClosed} />}
+      {tab === "open" ? <LiveOpenList /> : <LiveClosedList />}
     </div>
   );
 }

@@ -1,8 +1,14 @@
 "use client";
 
+import ClosedDayGroup from "@/components/positions/ClosedDayGroup";
+import ClosedDetailDrawer from "@/components/positions/ClosedDetailDrawer";
 import { useSelectedAccount } from "@/hooks/useSelectedAccount";
-import { useGetClosePositionsQuery } from "@/redux/features/trade/tradeApi";
-import DayHeader from "../ai/positions/DayHeader";
+import {
+  useGetClosePositionsQuery,
+  useGetPositionQuery,
+} from "@/redux/features/trade/tradeApi";
+import { num } from "@/utils/num";
+import { useMemo, useState } from "react";
 import { Position } from "./types";
 
 function groupClosedByDay(list: Position[]) {
@@ -17,9 +23,7 @@ function groupClosedByDay(list: Position[]) {
   );
 }
 
-export default function ClosedList({ items }: { items: Position[] }) {
-  const groups = groupClosedByDay(items);
-
+export default function ClosedList() {
   const { account } = useSelectedAccount();
   const accountId: string | undefined = account?._id;
 
@@ -28,28 +32,79 @@ export default function ClosedList({ items }: { items: Position[] }) {
     { skip: !accountId }
   );
 
-  console.log(data);
+  // normalize to UI shape (lots, openedAt/closedAt as Date, numbers safe)
+  const items = useMemo(
+    () =>
+      (data?.items ?? []).map((p: any) => ({
+        _id: String(p._id),
+        symbol: String(p.symbol),
+        side: p.side as "buy" | "sell",
+        status: p.status as "closed" | "open",
+        lots: num(p.lots ?? 0),
+        entryPrice: num(p.entryPrice ?? 0),
+        closePrice: num(p.closePrice ?? 0),
+        openedAt: p.openedAt ? new Date(p.openedAt) : null,
+        closedAt: p.closedAt ? new Date(p.closedAt) : null,
+        pnl: num(p.pnl ?? 0),
+        commissionClose: num(p.commissionClose ?? 0),
+        takeProfit: num(p.takeProfit),
+        stopLoss: num(p.stopLoss),
+      })),
+    [data]
+  );
 
-  if (groups.length === 0) {
-    return (
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-400">
-        No closed trades yet
-      </div>
-    );
-  }
+  // group by calendar day of closedAt (desc)
+  const groups = useMemo(() => {
+    const m = new Map<string, any[]>();
+    for (const p of items) {
+      const key = p.closedAt
+        ? new Date(p.closedAt.toDateString()).toISOString()
+        : "unknown";
+      (m.get(key) ?? m.set(key, []).get(key)!).push(p);
+    }
+    return Array.from(m.entries())
+      .sort(([a], [b]) => (a > b ? -1 : 1))
+      .map(([k, arr]) => ({ day: new Date(k), items: arr }));
+  }, [items]);
+
+  const [openId, setOpenId] = useState<string | null>(null);
+  const detailQ = useGetPositionQuery({ id: openId! }, { skip: !openId });
+  const detail = detailQ.data?.item;
 
   return (
     <div className="space-y-3">
-      {groups.map(([day, list]) => (
-        <div key={day}>
-          <DayHeader date={new Date(day)} />
-          <div className="space-y-2">
-            {/* {list.map((p) => (
-              <PositionRow key={p.id} p={p} closed />
-            ))} */}
-          </div>
+      {isLoading && (
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm">
+          Loading…
         </div>
-      ))}
+      )}
+
+      {!isLoading && groups.length === 0 && (
+        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6 text-center text-neutral-400">
+          No closed positions
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {groups.map((g) => (
+          <div
+            key={g.day.toISOString()}
+            className="rounded-lg border border-neutral-800 bg-neutral-950/50 p-3"
+          >
+            <ClosedDayGroup
+              day={g.day}
+              items={g.items}
+              onPick={(id) => setOpenId(id)}
+            />
+          </div>
+        ))}
+      </div>
+
+      <ClosedDetailDrawer
+        open={!!openId && !!detail}
+        onClose={() => setOpenId(null)}
+        item={detail}
+      />
     </div>
   );
 }
