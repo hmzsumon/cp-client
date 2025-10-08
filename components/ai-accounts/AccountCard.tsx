@@ -3,6 +3,8 @@
 ────────────────────────────────────────────────────────────────────────── */
 
 import { IAccount } from "@/redux/features/ai-account/ai-accountApi";
+
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import OpenAccountFab from "./OpenAccountFab";
@@ -44,7 +46,11 @@ export default function AccountCard({
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-        <button className="rounded-lg bg-neutral-800 py-2">Withdraw</button>
+        <Link href="/withdraw" className="w-full">
+          <button className="rounded-lg w-full bg-neutral-800 py-2">
+            Withdraw
+          </button>
+        </Link>
 
         <button
           className="rounded-lg w-full bg-neutral-800 py-2"

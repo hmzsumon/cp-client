@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
-
 export default function NoOpenCard() {
   return (
-    <Link href="/trade" className="block">
+    <div className="block">
       <div
         className="
           flex items-center justify-center gap-2 rounded-lg border border-neutral-800
@@ -17,6 +15,6 @@ export default function NoOpenCard() {
         </div>
         <div className="text-sm font-medium text-neutral-200">BTC - Trade</div>
       </div>
-    </Link>
+    </div>
   );
 }
