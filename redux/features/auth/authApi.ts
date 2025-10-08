@@ -114,7 +114,7 @@ export const authApi = apiSlice.injectEndpoints({
     // resend verification email
     resendVerificationEmail: builder.mutation<IUser, any>({
       query: (body) => ({
-        url: "/resend-email-verification",
+        url: "/resend-verification-email",
         method: "POST",
         body,
       }),
@@ -395,6 +395,24 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    /* ────────── Send otp to user email ────────── */
+    sendOtpToUserEmail: builder.mutation<any, any>({
+      query: (body) => ({
+        url: "/send-otp-to-email",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    /* ────────── Verify otp────────── */
+    verifyOtp: builder.mutation<any, any>({
+      query: (body) => ({
+        url: "/verify-otp",
+        method: "POST",
+        body,
+      }),
+    }),
+
     /* ────────── End────────── */
   }),
 });
@@ -407,7 +425,9 @@ export const {
   useVerifyEmailMutation,
   useLoginUserMutation,
   useLogoutUserMutation,
+
   useResendVerificationEmailMutation,
+
   useCheckUserByEmailMutation,
   useLoadUserQuery,
   useChangeEmailMutation,
@@ -447,4 +467,7 @@ export const {
   useGetMyTeamQuery,
 
   useFindUserByQueryMutation,
+
+  useSendOtpToUserEmailMutation,
+  useVerifyOtpMutation,
 } = authApi;
