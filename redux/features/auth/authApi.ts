@@ -383,6 +383,18 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    /* ────────── find user by email OR id ────────── */
+    findUserByQuery: builder.mutation<
+      any,
+      { query: string; via?: "email" | "customerId" }
+    >({
+      query: (body) => ({
+        url: `/user-lookup`,
+        method: "POST",
+        body, // { query, via? }
+      }),
+    }),
+
     /* ────────── End────────── */
   }),
 });
@@ -433,4 +445,6 @@ export const {
   useResetForgotPasswordMutation,
 
   useGetMyTeamQuery,
+
+  useFindUserByQueryMutation,
 } = authApi;

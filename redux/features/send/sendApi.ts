@@ -8,7 +8,7 @@ export const sendApi = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["User"],
+      invalidatesTags: ["User", "Transactions"],
     }),
 
     /* ────────── find user by customer id ────────── */

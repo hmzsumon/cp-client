@@ -17,6 +17,7 @@ const Transactions = () => {
 
   // ── safe destructure (avoid `|| []` on object)
   const transactions: TransactionRecord[] = transData?.transactions ?? [];
+  console.log(transactions);
 
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState<TransactionRecord[]>([]);

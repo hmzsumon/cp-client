@@ -1,7 +1,12 @@
+import { useState } from "react";
+import OpenAccountFab from "./OpenAccountFab";
+import OpenAccountWizard from "./wizard/OpenAccountWizard";
+
 /* ──────────────────────────────────────────────────────────────────────────
    NoAccountsCard — matches your screenshot (Open / Restore)
 ────────────────────────────────────────────────────────────────────────── */
 export default function NoAccountsCard({ onOpen }: { onOpen: () => void }) {
+  const [openWizard, setOpenWizard] = useState(false);
   return (
     <div className="mt-4 rounded-2xl bg-neutral-900 border border-neutral-800 p-5">
       <div className="text-xl font-semibold">No active accounts</div>
@@ -10,11 +15,9 @@ export default function NoAccountsCard({ onOpen }: { onOpen: () => void }) {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3">
-        <button
-          className="flex flex-col items-center justify-center rounded-full bg-neutral-800 w-20 h-20 mx-auto"
-          onClick={onOpen}
-        >
-          <span className="text-2xl">＋</span>
+        <button className="flex flex-col items-center justify-center rounded-full bg-neutral-800 w-20 h-20 mx-auto">
+          {/* FABs */}
+          <OpenAccountFab onClick={() => setOpenWizard(true)} />
         </button>
         <button className="flex flex-col items-center justify-center rounded-full bg-neutral-800 w-20 h-20 mx-auto opacity-60 cursor-not-allowed">
           <span className="text-xl">▢</span>
@@ -25,6 +28,11 @@ export default function NoAccountsCard({ onOpen }: { onOpen: () => void }) {
         <div>Open account</div>
         <div>Restore</div>
       </div>
+
+      <OpenAccountWizard
+        open={openWizard}
+        onClose={() => setOpenWizard(false)}
+      />
     </div>
   );
 }

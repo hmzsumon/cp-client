@@ -56,7 +56,7 @@ export default function AccountPickerSheet({
 
         {/* tabs */}
         <div className="px-4 flex gap-8 border-b border-neutral-800">
-          {(["real", "demo", "archived"] as AccountTab[]).map((t) => (
+          {(["real", "archived"] as AccountTab[]).map((t) => (
             <button
               key={t}
               onClick={() => dispatch(setAccountTab(t))}
@@ -102,7 +102,7 @@ export default function AccountPickerSheet({
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs">
                   <span className="px-2 py-1 rounded bg-[#0f2f18] text-[#69db7c]">
-                    MT5
+                    CGFX
                   </span>
                   <span className="px-2 py-1 rounded bg-[#0f2f18] text-[#69db7c] capitalize">
                     {acc.type}

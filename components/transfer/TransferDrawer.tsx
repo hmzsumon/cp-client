@@ -1,3 +1,5 @@
+/* ────────── TransferDrawer (PIN verify for actions like transfer) ────────── */
+
 "use client";
 
 import {
@@ -8,10 +10,10 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import PulseLoader from "react-spinners/PulseLoader";
-
-import { useCheckOldPinMutation } from "@/redux/features/auth/authApi";
-import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -19,7 +21,7 @@ import { Label } from "../ui/label";
 interface SymbolDrawerProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  handleConfirm: () => void;
+  handleConfirm: () => void; // ← ম্যাচ হলে এই কলব্যাক চলবে
 }
 
 export function TransferDrawer({
@@ -27,126 +29,132 @@ export function TransferDrawer({
   setOpen,
   handleConfirm,
 }: SymbolDrawerProps) {
-  const [oldPin, setOldPin] = useState("");
-  const [oldPinError, setOldPinError] = useState(false);
-  const [oldPinErrorText, setOldPinErrorText] = useState("");
-  const [isOldPinChecked, setIsOldPinChecked] = useState(false);
+  const router = useRouter();
+  const { user } = useSelector((state: any) => state.auth);
 
-  const [
-    checkOldPin,
-    {
-      isLoading: isCheckingPin,
-      isSuccess: isSuccessOldPin,
-      isError: isErrorOldPin,
-      error: errorOldPin,
-    },
-  ] = useCheckOldPinMutation();
+  /* ────────── guard: no PIN set -> redirect to create PIN ────────── */
+  const isSecurityPin = Boolean(user?.securityPin);
+  useEffect(() => {
+    if (isSecurityPin === null) router.push("/settings/security/set-pin");
+  }, [isSecurityPin, router]);
 
-  // handle old pin change
-  const handleOldPinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  /* ────────── local state ────────── */
+  const [newPin, setNewPin] = useState("");
+  const [newPinError, setNewPinError] = useState(false);
+  const [newPinErrorText, setNewPinErrorText] = useState("");
+  const [isCheckingPin, setIsCheckingPin] = useState(false);
 
-    // Only allow digits and max 6 characters
-    if (/^\d{0,6}$/.test(value)) {
-      setOldPin(value);
+  /* ────────── derived: canConfirm ────────── */
+  const canConfirm = useMemo(() => {
+    return (
+      newPin.length === 6 &&
+      newPin === String(user?.securityPin || "") &&
+      !newPinError
+    );
+  }, [newPin, newPinError, user?.securityPin]);
 
-      if (value.length < 6) {
-        setOldPinError(true);
-        setOldPinErrorText("PIN must be exactly 6 digits");
+  /* ────────── input change (only digits, max 6) ────────── */
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+    setNewPin(value);
+
+    // basic length validation live
+    if (value.length < 6) {
+      setNewPinError(true);
+      setNewPinErrorText("PIN must be exactly 6 digits");
+    } else {
+      setNewPinError(false);
+      setNewPinErrorText("");
+    }
+  };
+
+  /* ────────── blur validation: check match to saved PIN ────────── */
+  const handlePinBlur = () => {
+    if (newPin.length === 6) {
+      if (String(user?.securityPin || "") !== newPin) {
+        setNewPinError(true);
+        setNewPinErrorText("PIN does not match");
       } else {
-        setOldPinError(false);
-        setOldPinErrorText("");
+        setNewPinError(false);
+        setNewPinErrorText("");
       }
     }
   };
 
-  // ✅ Blur Handler
-  const handleOldPinBlur = () => {
-    if (oldPin.length !== 6) {
-      setOldPinError(true);
-      setOldPinErrorText("PIN must be exactly 6 digits");
-    } else {
-      setOldPinError(false);
-      setOldPinErrorText("");
-      handleOldPinCheck(); // check from server
+  /* ────────── confirm click ────────── */
+  const onConfirm = async () => {
+    if (!canConfirm) return;
+    try {
+      setIsCheckingPin(true);
+      // লোকাল ভেরিফাই হয়ে গেছে; আপনার মূল action চালান
+      handleConfirm();
+      setOpen(false);
+    } finally {
+      setIsCheckingPin(false);
     }
   };
-
-  //handle old pin check
-  const handleOldPinCheck = () => {
-    const data = {
-      oldPassCode: oldPin,
-    };
-    checkOldPin(data);
-  };
-
-  // useEffect to handle success and error
-  useEffect(() => {
-    if (isSuccessOldPin) {
-      setIsOldPinChecked(true);
-      setOldPinError(false);
-      setOldPinErrorText("");
-    }
-
-    if (isErrorOldPin) {
-      setIsOldPinChecked(false);
-      setOldPinError(true);
-      setOldPinErrorText("Pin is incorrect!");
-    }
-  }, [isSuccessOldPin, isErrorOldPin, errorOldPin]);
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerContent className="max-h-[85vh] rounded-t-3xl px-2 pb-4 bg-gray-900">
+      <DrawerContent className="max-h-[85vh] rounded-t-3xl bg-gray-900 px-2 pb-4">
         <div className="mx-auto w-full px-4 py-2">
           <DrawerHeader>
-            <DrawerTitle className="text-sm text-gray-100 text-center">
+            <DrawerTitle className="text-center text-sm text-gray-100">
               Security Verify
             </DrawerTitle>
           </DrawerHeader>
         </div>
-        <div className="grid items-start gap-4  ">
+
+        <div className="grid items-start gap-4 px-4">
+          {/* ────────── PIN field ────────── */}
           <div className="grid gap-2">
             <Label
-              htmlFor="email"
+              htmlFor="pin"
               className={`${
-                oldPinError ? "text-red-500" : "text-gray-100"
+                newPinError ? "text-red-500" : "text-gray-100"
               } ml-1`}
             >
-              Enter Your Pin
+              Enter Your PIN
             </Label>
             <Input
-              type="tex"
-              id="email"
+              id="pin"
+              type="password"
+              inputMode="numeric"
+              pattern="\d*"
               placeholder="e.g. 123456"
-              onChange={handleOldPinChange}
-              onBlur={handleOldPinBlur}
+              value={newPin}
+              onChange={handleInputChange}
+              onBlur={handlePinBlur}
               className={`${
-                oldPinError
+                newPinError
                   ? "border-red-500 text-red-500"
                   : "border-gray-300 text-gray-100"
               }`}
             />
-            {oldPinError && (
-              <span className="text-xs text-red-500 font-bold ml-1 mt-1">
-                {oldPinErrorText}
+            {newPinError && (
+              <span className="ml-1 mt-1 text-xs font-bold text-red-500">
+                {newPinErrorText}
               </span>
             )}
           </div>
 
+          {/* ────────── Confirm button ────────── */}
           <Button
-            className="bg-htx-blue"
-            disabled={!isOldPinChecked || isCheckingPin}
-            onClick={handleConfirm}
+            className="bg-htx-blue hover:bg-htx-blue"
+            disabled={!canConfirm || isCheckingPin}
+            onClick={onConfirm}
           >
             {isCheckingPin ? (
-              <PulseLoader color="white" size={8} className="mx-auto" />
+              <span className="mx-auto">
+                <PulseLoader color="#fff" size={8} />
+              </span>
             ) : (
-              "Confirm "
+              "Confirm"
             )}
           </Button>
         </div>
-        <DrawerFooter className="px-0 py-2">
+
+        <DrawerFooter className="px-4 py-2">
           <DrawerClose asChild>
             <Button variant="outline" className="bg-orange-500 text-white">
               Cancel
