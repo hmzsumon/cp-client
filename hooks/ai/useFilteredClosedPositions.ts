@@ -2,9 +2,10 @@
 
 import type { Position } from "@/components/ai/positions/types";
 import { useSelectedAiAccount } from "@/hooks/useSelectedAiAccount";
-import { useGetAllAiPositionsQuery } from "@/redux/features/ai-account/ai-accountApi";
+import { useGetClosedAiPositionsQuery } from "@/redux/features/ai-account/ai-accountApi";
 import { useMemo } from "react";
 
+/* ────────── map raw -> UI Position (with closedAt) ────────── */
 function toUiPosition(p: any): Position {
   const sym = String(p.symbol || "")
     .toUpperCase()
@@ -21,15 +22,31 @@ function toUiPosition(p: any): Position {
     pnlUsd: Number(p.unrealizedPnl ?? p.pnl ?? 0),
     tag: p.takeProfit ? "TP" : null,
     status: p.status || "open",
-    profit: Number(p.profit ?? 0),
+    profit: Number(p.takeProfit ?? 0),
+    closePrice: Number.isFinite(p.closePrice)
+      ? Number(p.closePrice)
+      : undefined,
+    maniClosePrice: Number.isFinite(p.manipulateClosePrice)
+      ? Number(p.manipulateClosePrice)
+      : undefined,
+
+    /* ⬇️ NEW: robust closedAt mapping (adjust if your API differs) */
+    closedAt:
+      p.closedAt ||
+      p.closeTime ||
+      p.closedTime ||
+      p.closed_at ||
+      p.updatedAt ||
+      p.createdAt ||
+      null,
   };
 }
 
 /** selected account-এর plan অনুযায়ী open items + count + loading */
-export function useFilteredOpenPositions() {
+export function useFilteredClosedPositions() {
   const { account, loading: accountLoading } = useSelectedAiAccount();
-  const { data, isLoading, isFetching } = useGetAllAiPositionsQuery();
-  console.log({ data, isLoading, isFetching });
+  const { data, isLoading, isFetching } = useGetClosedAiPositionsQuery();
+  console.log({ data });
 
   const items: Position[] = useMemo(() => {
     if (!account) return [];

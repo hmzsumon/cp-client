@@ -2,7 +2,7 @@
 
 import { fmt } from "@/utils/num";
 
-export default function AiPnlBadge({
+export default function AiClosedPnlBadge({
   value,
   loading = false,
   onClose,
@@ -31,7 +31,7 @@ export default function AiPnlBadge({
         </span>
       ) : (
         <span className="text-xs font-semibold">
-          {(pos ? "+" : "") + fmt(value, 2)} USDT
+          {(pos ? "+" : "") + fmt(value, 2)} USD
         </span>
       )}
 

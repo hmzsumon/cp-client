@@ -121,5 +121,5 @@ export const NAV_ITEMS: NavItem[] = [
 export const INVITE_CARD = {
   title: "Invite friends and earn money",
   icon: SquareGanttChart,
-  href: "/dashboard/referrals",
+  href: "/agent-zone/referral",
 };

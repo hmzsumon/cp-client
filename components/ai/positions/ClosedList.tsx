@@ -1,3 +1,4 @@
+/* ────────── ClosedList: groups closed items by day ────────── */
 "use client";
 
 import DayHeader from "./DayHeader";
@@ -16,16 +17,32 @@ function groupClosedByDay(list: Position[]) {
   );
 }
 
-export default function ClosedList({ items }: { items: Position[] }) {
-  const groups = groupClosedByDay(items);
+export default function ClosedList({
+  items,
+  loading = false,
+}: {
+  items: Position[];
+  loading?: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        <div className="h-6 w-40 rounded bg-neutral-800 animate-pulse" />
+        <div className="h-16 rounded-lg bg-neutral-800 animate-pulse" />
+        <div className="h-16 rounded-lg bg-neutral-800 animate-pulse" />
+      </div>
+    );
+  }
 
-  if (groups.length === 0) {
+  if (!items?.length) {
     return (
       <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-400">
         No closed trades yet
       </div>
     );
   }
+
+  const groups = groupClosedByDay(items);
 
   return (
     <div className="space-y-3">

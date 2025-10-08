@@ -97,6 +97,15 @@ export const aiAccountApi = apiSlice.injectEndpoints({
       query: () => ({ url: "/get-active-ai-positions-for-user" }),
       providesTags: ["Positions"],
     }),
+
+    /* ────────── get all closed ai positions ────────── */
+    getClosedAiPositions: builder.query<
+      { success: true; items: IAccount[] },
+      void
+    >({
+      query: () => ({ url: "/get-closed-ai-positions-for-user" }),
+      providesTags: ["Positions"],
+    }),
   }),
 });
 
@@ -109,4 +118,5 @@ export const {
   useCloseAccountMutation,
   useDemoTopUpMutation,
   useGetAllAiPositionsQuery,
+  useGetClosedAiPositionsQuery,
 } = aiAccountApi;

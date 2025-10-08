@@ -1,55 +1,11 @@
+/* ────────── PositionsPanel (tabs: open / closed) ────────── */
 "use client";
 
+import { useFilteredClosedPositions } from "@/hooks/ai/useFilteredClosedPositions"; // ⬅️ NEW
 import { useFilteredOpenPositions } from "@/hooks/ai/useFilteredOpenPositions";
 import { useState } from "react";
 import ClosedList from "./ClosedList";
 import OpenList from "./OpenList";
-import type { Position } from "./types";
-
-const demoClosed: Position[] = [
-  {
-    id: "cl1",
-    symbol: "BTC",
-    side: "buy",
-    lots: 1,
-    entryPrice: 120628.74,
-    closePrice: 120630.74,
-    pnlUsd: 2,
-    tag: "TP",
-    closedAt: "2025-10-03T20:30:00.000Z",
-    s: "BTC",
-    status: "closed",
-    profit: 2,
-  },
-  {
-    id: "cl2",
-    symbol: "BTC",
-    side: "sell",
-    lots: 1,
-    entryPrice: 120567.55,
-    closePrice: 120566.17,
-    pnlUsd: 1.38,
-    tag: "TP",
-    closedAt: "2025-10-03T18:10:00.000Z",
-    s: "BTC",
-    status: "closed",
-    profit: 1.38,
-  },
-  {
-    id: "cl3",
-    symbol: "BTC",
-    side: "buy",
-    lots: 1,
-    entryPrice: 120100.17,
-    closePrice: 120141.04,
-    pnlUsd: 40.87,
-    tag: "TP",
-    closedAt: "2025-10-02T15:45:00.000Z",
-    s: "BTC",
-    status: "closed",
-    profit: 40.87,
-  },
-];
 
 function badge(n: number) {
   return (
@@ -61,12 +17,18 @@ function badge(n: number) {
 
 export default function PositionsPanel() {
   const [tab, setTab] = useState<"open" | "closed">("open");
-  const { count } = useFilteredOpenPositions();
+
+  const { count: openCount } = useFilteredOpenPositions();
+  const {
+    items: closedItems,
+    count: closedCount,
+    loading: closedLoading,
+  } = useFilteredClosedPositions(); // ⬅️ get API data
 
   return (
     <div className="mt-4 rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-3">
       {/* Tabs */}
-      <div className="mb-3 flex items-center gap-6 text-sm border-b border-neutral-800 pb-3">
+      <div className="mb-3 flex items-center gap-6 border-b border-neutral-800 pb-3 text-sm">
         <button
           onClick={() => setTab("open")}
           className={`relative pb-1 ${
@@ -76,9 +38,9 @@ export default function PositionsPanel() {
           }`}
         >
           Open
-          {count > 0 && badge(count)}
+          {openCount > 0 && badge(openCount)}
           {tab === "open" && (
-            <span className="absolute -bottom-[2.5px] left-0 h-[1.5px] w-full bg-neutral-200 rounded" />
+            <span className="absolute -bottom-[2.5px] left-0 h-[1.5px] w-full rounded bg-neutral-200" />
           )}
         </button>
 
@@ -91,14 +53,19 @@ export default function PositionsPanel() {
           }`}
         >
           Closed
+          {closedCount > 0 && badge(closedCount)}
           {tab === "closed" && (
-            <span className="absolute -bottom-[2.5px] left-0 h-[1.5px] w-full bg-neutral-200 rounded" />
+            <span className="absolute -bottom-[2.5px] left-0 h-[1.5px] w-full rounded bg-neutral-200" />
           )}
         </button>
       </div>
 
       {/* Body */}
-      {tab === "open" ? <OpenList /> : <ClosedList items={demoClosed} />}
+      {tab === "open" ? (
+        <OpenList />
+      ) : (
+        <ClosedList items={closedItems} loading={closedLoading} />
+      )}
     </div>
   );
 }

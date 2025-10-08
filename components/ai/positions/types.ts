@@ -14,4 +14,5 @@ export type Position = {
   s: string;
   status: "open" | "closed";
   profit: number;
+  maniClosePrice?: number;
 };
