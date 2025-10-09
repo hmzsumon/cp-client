@@ -15,9 +15,9 @@ const MetricCard: React.FC<Props> = ({ label, amount, suffix, onMore }) => {
   return (
     <div className="flex flex-col justify-between rounded-lg border border-neutral-800 bg-neutral-950 p-4">
       <div>
-        <p className="text-2xl font-bold text-neutral-100">{amount}</p>
+        <p className="text-sm font-bold text-neutral-100">{amount}</p>
         {suffix ? <p className="text-xs text-neutral-400">{suffix}</p> : null}
-        <p className="mt-1 text-sm text-neutral-300">{label}</p>
+        <p className="mt-1 text-xs text-neutral-300">{label}</p>
       </div>
 
       <button

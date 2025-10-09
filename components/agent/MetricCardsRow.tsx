@@ -1,23 +1,36 @@
-/* ── Metric Cards Row ─────────────────────────────────────────────────────── */
-
+// components/agent/MetricCardsRow.tsx
 "use client";
 
 import MetricCard from "./MetricCard";
 
-const MetricCardsRow: React.FC = () => {
+const fmt2 = (n: number) => (Number.isFinite(n) ? n.toFixed(2) : "0.00");
+
+const MetricCardsRow: React.FC<{
+  loading?: boolean;
+  deposit: number;
+  withdraw: number;
+  netDeposit: number;
+  aiTradeRoi: number;
+  volume: number;
+}> = ({
+  loading = false,
+  deposit,
+  withdraw,
+  netDeposit,
+  aiTradeRoi,
+  volume,
+}) => {
+  const V = (n: number, suffix = " USDT") =>
+    loading ? "…" : `${fmt2(n)}${suffix}`;
+
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        {/* ── Tabs left ── */}
-        {/* Tabs are passed by parent; this section only holds the grid */}
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <MetricCard label="Deposit" amount="0.00 USD" />
-        <MetricCard label="Withdrawal" amount="0.00 USD" />
-        <MetricCard label="Net deposit" amount="0.00 USD" />
-        <MetricCard label="Rebate" amount="0.00 USD" />
-        <MetricCard label="Volume" amount="0.00 USD" suffix="(USD)" />
+        <MetricCard label="Deposit" amount={V(deposit)} />
+        <MetricCard label="Withdrawal" amount={V(withdraw)} />
+        <MetricCard label="Total Ai trade" amount={V(netDeposit)} />
+        <MetricCard label="Ai trade ROI" amount={V(aiTradeRoi)} />
+        <MetricCard label="Volume" amount={V(volume, "")} suffix="(USDT)" />
       </div>
     </section>
   );
