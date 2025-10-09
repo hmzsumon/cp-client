@@ -33,7 +33,7 @@ export default function DashboardPage() {
     totalTransferToWallet,
     totalReceive,
     totalSend,
-    totalReferBonus,
+    totalReferralBonus,
     rankEarning,
   } = wallet as Record<string, unknown>;
 
@@ -102,7 +102,7 @@ export default function DashboardPage() {
     {
       id: "ref_bonus",
       title: "Referral Bonus",
-      amount: toAmt(totalReferBonus),
+      amount: toAmt(totalReferralBonus),
       currency: "USDT",
     },
     {
