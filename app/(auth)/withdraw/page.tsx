@@ -38,7 +38,7 @@ export default function WithdrawPage() {
   const minWithdraw = 12;
   const feeRate = 0.05;
   const availableBalance = useMemo(
-    () => Math.max(0, (user?.m_balance || 0) - 3),
+    () => Math.max(0, user?.m_balance || 0),
     [user?.m_balance]
   );
 

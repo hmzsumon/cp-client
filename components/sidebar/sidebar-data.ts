@@ -82,10 +82,10 @@ export const NAV_ITEMS: NavItem[] = [
 
     children: [
       { label: "My referral", href: "/agent-zone/referral" },
-      // {
-      //   label: "My clients",
-      //   href: "/agent-zone/clients",
-      // },
+      {
+        label: "My clients",
+        href: "/agent-zone/clients",
+      },
     ],
   },
 
