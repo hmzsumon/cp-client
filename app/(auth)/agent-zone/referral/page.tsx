@@ -10,7 +10,8 @@ import { useSelector } from "react-redux";
 
 const AgentDashboardPage: React.FC = () => {
   const { user } = useSelector((state: any) => state.auth);
-  const { kpisText, getMetricsByRange, loading } = useAgentTeamSummary();
+  const { kpisText, getMetricsByRange, levels, loading } =
+    useAgentTeamSummary();
 
   // referral link
   const host = typeof window !== "undefined" ? window.location.host : "";
@@ -32,20 +33,20 @@ const AgentDashboardPage: React.FC = () => {
 
         <KpiGrid
           loading={loading}
-          countOfReferring={kpisText.countOfReferring}
+          countOfReferring={String(levels[0]?.inactiveUsers) ?? 0}
           totalReferralIncome={kpisText.totalReferralIncome}
-          level1AiTradeBalance={kpisText.level1AiTradeBalance}
-          level1LiveTradeBalance={kpisText.level1LiveTradeBalance}
+          level1AiTradeBalance={String(levels[0]?.aiTradeBalance) ?? 0}
+          level1LiveTradeBalance={String(levels[0]?.liveTradeBalance) ?? 0}
         />
 
         <section className="rounded-lg border border-neutral-800 bg-neutral-950 p-4">
           <MetricCardsRow
             loading={loading}
-            deposit={metrics.deposit}
-            withdraw={metrics.withdraw}
+            deposit={levels[0]?.deposit ? levels[0]?.deposit : 0}
+            withdraw={levels[0]?.withdraw ? levels[0]?.withdraw : 0}
             netDeposit={metrics.netDeposit}
-            aiTradeRoi={metrics.aiTradeRoi ?? 0}
-            volume={metrics.volume}
+            aiTradeRoi={levels[0]?.aiTradeCommission ?? 0}
+            volume={levels[0]?.liveTradeCommission ?? 0}
           />
         </section>
 

@@ -34,8 +34,9 @@ export function TransferDrawer({
 
   /* ────────── guard: no PIN set -> redirect to create PIN ────────── */
   const isSecurityPin = Boolean(user?.securityPin);
+  console.log("isSecurityPin", isSecurityPin);
   useEffect(() => {
-    if (isSecurityPin === null) router.push("/settings/security/set-pin");
+    if (!isSecurityPin) router.push("/settings/security/set-pin");
   }, [isSecurityPin, router]);
 
   /* ────────── local state ────────── */

@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 import StoreProvider from "./StoreProvider";
+import Providers from "./providers";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -51,7 +52,9 @@ export default function RootLayout({
       >
         <StoreProvider>
           <SocketProvider>
-            <div className="flex flex-col  bg-wrapper  ">{children}</div>
+            <body style={{ background: "#0B0D12" }}>
+              <Providers>{children}</Providers>
+            </body>
             <Toaster />
           </SocketProvider>
         </StoreProvider>

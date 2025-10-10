@@ -26,6 +26,7 @@ type VerifyContext =
   | "withdraw"
   | "password_change"
   | "email_change"
+  | "set_new_pin"
   | "generic";
 
 interface SecurityVerifyDrawerProps {

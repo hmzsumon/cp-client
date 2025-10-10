@@ -4,7 +4,7 @@
 import { useGetMyTeamQuery } from "@/redux/features/auth/authApi";
 import { useMemo } from "react";
 
-/* ── Types coming from your API ────────────────────────────── */
+/* ────────── Types ────────── */
 export type TeamLevel = {
   title: string;
   users: string[]; // user ids
@@ -13,6 +13,9 @@ export type TeamLevel = {
   withdraw: number;
   aiTradeBalance: number;
   liveTradeBalance: number;
+  inactiveUsers: string[];
+  aiTradeCommission: number;
+  liveTradeCommission: number;
 };
 
 export type TeamSummary = {
@@ -20,29 +23,20 @@ export type TeamSummary = {
   userId: string;
   customerId: string;
   title: string;
-
-  // Top-level totals
   totalTeamMember: number;
   teamActiveMember: number;
-
   totalTeamDeposit: number;
   totalTeamWithdraw: number;
   totalTeamActiveDeposit: number;
-
-  totalReferralBonus: number; // all-time team commission?
+  totalReferralBonus: number;
   todayTeamCommission: number;
   yesterdayTeamCommission: number;
   thisMonthCommission: number;
-
   thisMonthSales: number;
   lastMonthSales: number;
-
   teamTotalAiTradeBalance: number;
   teamTotalLiveTradeBalance: number;
-
   teamTotalAiTradeCommission: number;
-
-  // per-level
   level_1: TeamLevel;
   level_2: TeamLevel;
   level_3: TeamLevel;
@@ -57,19 +51,29 @@ export type TeamSummary = {
 
 export type Range = "yesterday" | "lastWeek" | "thisMonth" | "lastMonth";
 
-/* ── Helpers ───────────────────────────────────────────────── */
+/* ────────── Helpers ────────── */
 const fmt = (n?: number) =>
   (Number.isFinite(n as number) ? (n as number) : 0).toFixed(2);
 
-/* ── Hook ──────────────────────────────────────────────────── */
+export const ordinal = (n: number) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+/* ────────── Hook ────────── */
 export function useAgentTeamSummary() {
   const { data, isLoading, isFetching, isError, error } = useGetMyTeamQuery({});
   const team = data?.team as TeamSummary | undefined;
 
-  // Flatten levels array (handy in tables/loops)
-  const levels: TeamLevel[] = useMemo(() => {
-    if (!team) return [];
-    return [
+  // Levels with meta (fixes TS error and helps UI)
+  const levels = useMemo(() => {
+    if (!team)
+      return [] as Array<
+        TeamLevel & { level: number; ordinalLabel: string; userCount: number }
+      >;
+
+    const arr = [
       team.level_1,
       team.level_2,
       team.level_3,
@@ -80,27 +84,40 @@ export function useAgentTeamSummary() {
       team.level_8,
       team.level_9,
       team.level_10,
-    ].filter(Boolean) as TeamLevel[];
+    ];
+
+    return arr
+      .map((lvl, idx) => {
+        if (!lvl) return null;
+        const level = idx + 1;
+        return {
+          ...lvl,
+          level,
+          ordinalLabel: ordinal(level), // "1st", "2nd", ...
+          userCount: Array.isArray(lvl.users) ? lvl.users.length : 0,
+        };
+      })
+      .filter(Boolean) as Array<
+      TeamLevel & { level: number; ordinalLabel: string; userCount: number }
+    >;
   }, [team]);
 
-  // KPIs you needed on the top grid
+  // KPIs
   const kpis = useMemo(() => {
     return {
       countOfReferring: team?.totalTeamMember ?? 0,
-      totalReferralIncome: team?.totalReferralBonus ?? 0, // বা totalReferralBonus থাকলে সেটি নিন
+      totalReferralIncome: team?.totalReferralBonus ?? 0,
       level1AiTradeBalance: team?.level_1?.aiTradeBalance ?? 0,
       level1LiveTradeBalance: team?.level_1?.liveTradeBalance ?? 0,
     };
   }, [team]);
 
-  // Metric cards — range-aware
-  // (আপনার API তে weekly নেই, তাই lastWeek -> 0 দেখাই বা ভবিষ্যতে ফিল্ড এলে ম্যাপ করুন)
   const getMetricsByRange = (range: Range) => {
     switch (range) {
       case "yesterday":
         return {
-          deposit: team?.totalTeamDeposit ?? 0, // যদি আপনার কাছে daily deposit না থাকে,
-          withdraw: team?.totalTeamWithdraw ?? 0, // এখানে মোট দেখাচ্ছি
+          deposit: team?.totalTeamDeposit ?? 0,
+          withdraw: team?.totalTeamWithdraw ?? 0,
           netDeposit: team?.teamTotalAiTradeBalance ?? 0,
           aiTradeRoi: team?.teamTotalAiTradeCommission ?? 0,
           volume: team?.thisMonthSales ?? 0,
@@ -111,7 +128,7 @@ export function useAgentTeamSummary() {
           withdraw: team?.totalTeamWithdraw ?? 0,
           netDeposit:
             (team?.totalTeamDeposit ?? 0) - (team?.totalTeamWithdraw ?? 0),
-          rebate: team?.thisMonthCommission ?? 0,
+          aiTradeRoi: team?.thisMonthCommission ?? 0,
           volume: team?.thisMonthSales ?? 0,
         };
       case "lastMonth":
@@ -120,16 +137,21 @@ export function useAgentTeamSummary() {
           withdraw: team?.totalTeamWithdraw ?? 0,
           netDeposit:
             (team?.totalTeamDeposit ?? 0) - (team?.totalTeamWithdraw ?? 0),
-          rebate: 0, // lastMonthCommission না থাকলে 0
+          aiTradeRoi: 0,
           volume: team?.lastMonthSales ?? 0,
         };
       case "lastWeek":
       default:
-        return { deposit: 0, withdraw: 0, netDeposit: 0, rebate: 0, volume: 0 };
+        return {
+          deposit: 0,
+          withdraw: 0,
+          netDeposit: 0,
+          aiTradeRoi: 0,
+          volume: 0,
+        };
     }
   };
 
-  // Nicely formatted strings if you want
   const kpisText = {
     countOfReferring: String(kpis.countOfReferring),
     totalReferralIncome: fmt(kpis.totalReferralIncome),
@@ -139,7 +161,7 @@ export function useAgentTeamSummary() {
 
   return {
     team,
-    levels,
+    levels, // now contains: level, ordinalLabel, userCount
     kpis,
     kpisText,
     getMetricsByRange,

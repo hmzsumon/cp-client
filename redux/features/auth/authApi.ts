@@ -305,6 +305,7 @@ export const authApi = apiSlice.injectEndpoints({
         method: "PUT",
         body,
       }),
+      invalidatesTags: ["User"],
     }),
 
     /* ── email change ───────────────────────────────────────── */
@@ -413,6 +414,10 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    getTeamUsersByLevel: builder.query<{ users: any[] }, { level: number }>({
+      query: ({ level }) => `/agent/team/levels/${level}/users`,
+    }),
+
     /* ────────── End────────── */
   }),
 });
@@ -464,10 +469,12 @@ export const {
   useVerifyResetCodeMutation,
   useResetForgotPasswordMutation,
 
-  useGetMyTeamQuery /* ────────── Get my team ────────── */,
+  useGetMyTeamQuery,
 
   useFindUserByQueryMutation,
 
   useSendOtpToUserEmailMutation,
   useVerifyOtpMutation,
+
+  useGetTeamUsersByLevelQuery,
 } = authApi;
