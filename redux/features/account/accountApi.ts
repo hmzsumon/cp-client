@@ -15,6 +15,8 @@ export interface IAccount {
   isDefault: boolean;
   status: "active" | "closed";
   mode: "real" | "demo";
+  plan: string;
+  equity: number;
 }
 
 export const accountApi = apiSlice.injectEndpoints({

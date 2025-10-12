@@ -31,6 +31,15 @@ const AgentDashboardPage: React.FC = () => {
           Agent Dashboard
         </h2>
 
+        <section>
+          <InvitationMethod
+            code={user?.customerId}
+            fullCode={user?.customerId}
+            link={shortReferralLink}
+            fullLink={referralLink}
+          />
+        </section>
+
         <KpiGrid
           loading={loading}
           countOfReferring={String(levels[0]?.inactiveUsers) ?? 0}
@@ -47,15 +56,6 @@ const AgentDashboardPage: React.FC = () => {
             netDeposit={metrics.netDeposit}
             aiTradeRoi={levels[0]?.aiTradeCommission ?? 0}
             volume={levels[0]?.liveTradeCommission ?? 0}
-          />
-        </section>
-
-        <section>
-          <InvitationMethod
-            code={user?.customerId}
-            fullCode={user?.customerId}
-            link={shortReferralLink}
-            fullLink={referralLink}
           />
         </section>
       </main>

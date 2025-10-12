@@ -1,10 +1,8 @@
-/* ──────────────────────────────────────────────────────────────────────────
-   AccountCard — shows single account (chips + balance + actions)
-────────────────────────────────────────────────────────────────────────── */
+// components/trade/AccountCard.tsx
 import { IAccount } from "@/redux/features/account/accountApi";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import AccountLiveEquity from "./AccountLiveEquity";
 import OpenAccountFab from "./OpenAccountFab";
 import OpenAccountWizard from "./wizard/OpenAccountWizard";
 
@@ -15,8 +13,8 @@ export default function AccountCard({
   acc: IAccount;
   onOpenPicker: () => void;
 }) {
-  const router = useRouter();
   const [openWizard, setOpenWizard] = useState(false);
+
   return (
     <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-2 py-4">
       <div className="flex items-center justify-between">
@@ -28,25 +26,34 @@ export default function AccountCard({
         <OpenAccountFab onClick={() => setOpenWizard(true)} />
       </div>
 
-      {/* ── chips row ── */}
+      {/* chips */}
       <div className="mt-2 flex gap-2 text-xs">
         <span className="px-2 py-1 rounded-lg bg-neutral-800">CGFX</span>
         <span className="px-2 py-1 rounded-lg bg-neutral-800 capitalize">
           {acc.name ? acc.name : acc.type}
         </span>
-        <span className="px-2 py-1 rounded-lg bg-neutral-800">Live</span>
+        <span className="px-2 py-1 rounded-lg bg-neutral-800">
+          {acc.mode ?? "live"}
+        </span>
       </div>
 
-      <div className="mt-4 flex items-center justify-between ">
-        <span className="text-xl font-semibold">
-          {acc.balance.toFixed(2)} USDT
-        </span>
-        <span
+      {/* Live equity */}
+      <div className="mt-4 flex items-center justify-between">
+        <AccountLiveEquity
+          accountId={String(acc._id)}
+          baseBalance={Number(acc.balance ?? acc.equity ?? 0)}
+          className="w-full"
+        />
+        {/* If you still want “Switch account” at the right, move it below */}
+      </div>
+
+      <div className="mt-2 text-right">
+        <button
           className="cursor-pointer text-sm text-neutral-400 underline"
           onClick={onOpenPicker}
         >
           Switch account
-        </span>
+        </button>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">

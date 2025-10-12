@@ -86,6 +86,15 @@ export const tradeApi = apiSlice.injectEndpoints({
     getPosition: b.query<{ item: any }, { id: string }>({
       query: ({ id }) => `/positions/${id}`,
     }),
+
+    /* ────────── get  open positions by id ────────── */
+    getOpenPositionsByAccount: b.query<
+      Position[],
+      { accountId: string; status?: "open" | "closed"; limit?: number }
+    >({
+      query: ({ accountId }) =>
+        `/open-positions?accountId=${accountId}&status=open`,
+    }),
   }),
 });
 
@@ -97,4 +106,5 @@ export const {
   useClosePositionMutation,
   useGetClosePositionsQuery,
   useGetPositionQuery,
+  useGetOpenPositionsByAccountQuery,
 } = tradeApi;

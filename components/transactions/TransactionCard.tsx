@@ -26,7 +26,7 @@ const TransactionCard = ({ record }: TransactionCardProps) => {
   const currency = record.currency || "USDT";
 
   return (
-    <div className="border-b py-3 px-4">
+    <div className="border-b py-3 px-4 text-gray-800">
       {/* ── summary header ───────────────────────────────────────────────── */}
       <div
         className="flex cursor-pointer items-center justify-between"

@@ -5,6 +5,7 @@ import { useListPositionsQuery } from "@/redux/features/trade/tradeApi";
 import { num } from "@/utils/num";
 import { useMemo } from "react";
 import NoOpenCard from "../ai/positions/NoOpenCard";
+import LiveTotalPnlBadge from "../ui/LiveTotalPnlBadge";
 import LivePositionRow from "./LivePositionRow";
 
 const fmt2 = (n?: number) =>
@@ -72,13 +73,17 @@ export default function OpenList() {
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1 pb-1 text-sm">
         <div className="text-neutral-400">Total P/L</div>
-        <div
-          className={`font-semibold ${
-            total >= 0 ? "text-emerald-400" : "text-red-400"
-          }`}
-        >
-          {(total >= 0 ? "+" : "") + fmt2(total)} USD
-        </div>
+        {items && items.length > 0 ? (
+          <LiveTotalPnlBadge positions={items} size="md" />
+        ) : (
+          <div
+            className={`font-semibold ${
+              total >= 0 ? "text-emerald-400" : "text-red-400"
+            }`}
+          >
+            {(total >= 0 ? "+" : "") + fmt2(total)} USDT
+          </div>
+        )}
       </div>
 
       {openItems.map((p: any) => (

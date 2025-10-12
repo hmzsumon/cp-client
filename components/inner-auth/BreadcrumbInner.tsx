@@ -29,7 +29,9 @@ export function BreadcrumbInner() {
         {/* Home link */}
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/dashboard" className=" text-gray-200 hover:text-white">
+              Dashboard
+            </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
 
