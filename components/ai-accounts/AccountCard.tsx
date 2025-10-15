@@ -7,6 +7,7 @@ import { IAccount } from "@/redux/features/ai-account/ai-accountApi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import AiAccountLiveEquity from "../ai/AiAccoountLiveEquity";
 import OpenAccountFab from "./OpenAccountFab";
 import OpenAccountWizard from "./wizard/OpenAccountWizard";
 
@@ -41,8 +42,15 @@ export default function AccountCard({
         </span>
       </div>
 
-      <div className="mt-4 text-2xl font-semibold">
-        {acc.balance.toFixed(2)} {acc.currency}
+      {/* Live equity */}
+      <div className="mt-4 flex items-center justify-between">
+        <AiAccountLiveEquity
+          accountId={String(acc._id)}
+          plan={acc.plan}
+          baseBalance={Number(acc.balance ?? acc.equity ?? 0)}
+          className="w-full"
+        />
+        {/* If you still want “Switch account” at the right, move it below */}
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">

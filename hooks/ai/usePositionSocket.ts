@@ -18,7 +18,6 @@ export function usePositionSocket() {
 
   useEffect(() => {
     if (!socket || !isSocketConnected) return;
-    console.log("socket connected");
 
     // const onOpened = (p: any) => {
     //   toast.success(
@@ -44,11 +43,13 @@ export function usePositionSocket() {
     };
 
     const onClosed = (p: any) => {
-      toast.success(
-        `Closed ${p?.symbol} ${String(p?.side).toUpperCase()} • P/L $${Number(
-          p?.pnl
-        ).toFixed(2)}`
-      );
+      if (p.closedBy === "ai") {
+        toast.success(
+          `Closed ${p?.symbol} ${String(p?.side).toUpperCase()} • P/L $${Number(
+            p?.takeProfit
+          ).toFixed(2)}`
+        );
+      }
       refetch();
     };
 

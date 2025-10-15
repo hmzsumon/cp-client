@@ -22,6 +22,24 @@ export interface IAccount {
   status: "active" | "closed";
   mode: "ai";
   plan: string;
+  equity: number;
+}
+
+export interface Position {
+  _id: string;
+  accountId: string;
+  symbol: string;
+  side: "buy" | "sell";
+  lots: number;
+  entryPrice: number;
+  status: "open" | "closed";
+  openedAt: string;
+  closedAt?: string;
+  profit?: number;
+  lastPrice?: number;
+  plan: string;
+  takeProfit: number;
+  manipulateClosePrice: number;
 }
 
 export const aiAccountApi = apiSlice.injectEndpoints({
@@ -106,6 +124,13 @@ export const aiAccountApi = apiSlice.injectEndpoints({
       query: () => ({ url: "/get-closed-ai-positions-for-user" }),
       providesTags: ["Positions"],
     }),
+    /* ────────── get open aiPositions by plan ────────── */
+    getOpenAiPositionsByPlan: builder.query<Position[], { plan: string }>({
+      query: ({ plan }) => ({
+        url: `/get-active-ai-positions-by-plan-for-user?plan=${plan}`,
+      }),
+      providesTags: ["Positions"],
+    }),
   }),
 });
 
@@ -119,4 +144,5 @@ export const {
   useDemoTopUpMutation,
   useGetAllAiPositionsQuery,
   useGetClosedAiPositionsQuery,
+  useGetOpenAiPositionsByPlanQuery,
 } = aiAccountApi;

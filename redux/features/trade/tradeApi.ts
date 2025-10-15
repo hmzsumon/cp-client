@@ -94,6 +94,7 @@ export const tradeApi = apiSlice.injectEndpoints({
     >({
       query: ({ accountId }) =>
         `/open-positions?accountId=${accountId}&status=open`,
+      providesTags: ["Positions"],
     }),
   }),
 });

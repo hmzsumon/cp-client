@@ -29,7 +29,6 @@ function toUiPosition(p: any): Position {
 export function useFilteredOpenPositions() {
   const { account, loading: accountLoading } = useSelectedAiAccount();
   const { data, isLoading, isFetching } = useGetAllAiPositionsQuery();
-  console.log({ data, isLoading, isFetching });
 
   const items: Position[] = useMemo(() => {
     if (!account) return [];

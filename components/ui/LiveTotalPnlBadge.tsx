@@ -6,6 +6,7 @@
    - renders a unified PnlBadge
 ─────────────────────────────────────────── */
 
+
 "use client";
 
 import LiveGroupPnlProbe from "@/components/ui/LiveGroupPnlProbe";
