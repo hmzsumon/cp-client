@@ -79,11 +79,6 @@ export function useAgentTeamSummary() {
       team.level_3,
       team.level_4,
       team.level_5,
-      team.level_6,
-      team.level_7,
-      team.level_8,
-      team.level_9,
-      team.level_10,
     ];
 
     return arr

@@ -1,79 +1,97 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { useSelector } from 'react-redux';
-import socketUrl from '@/config/socketUrl'; // ✅ Use dedicated socket URL
-import { SocketUser } from '@/types';
+import socketUrl from "@/config/socketUrl"; // ✅ Use dedicated socket URL
+import { apiSlice } from "@/redux/features/api/apiSlice";
+import { SocketUser } from "@/types";
+import { createContext, useContext, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { io, Socket } from "socket.io-client";
 
 interface iSocketContextType {
-	socket: Socket | null;
-	isSocketConnected: boolean;
-	onlineUsers: SocketUser[]; // Optional
+  socket: Socket | null;
+  isSocketConnected: boolean;
+  onlineUsers: SocketUser[]; // Optional
 }
 
 export const SocketContext = createContext<iSocketContextType | null>(null);
 
 export const SocketContextProvider = ({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) => {
-	const { user } = useSelector((state: any) => state.auth);
-	const [socket, setSocket] = useState<Socket | null>(null);
-	const [isSocketConnected, setIsSocketConnected] = useState(false);
-	const [onlineUsers, setOnlineUsers] = useState<SocketUser[]>([]);
+  /* ──────────  auth + local states  ────────── */
+  const { user } = useSelector((state: any) => state.auth);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<SocketUser[]>([]);
+  const dispatch = useDispatch();
 
-	useEffect(() => {
-		if (!user || !user._id) return;
+  /* ──────────  connect + join room  ────────── */
+  useEffect(() => {
+    if (!user || !user._id) return;
 
-		// ✅ No token passed
-		const newSocket = io(socketUrl, {
-			transports: ['websocket'],
-		});
+    const newSocket = io(socketUrl, {
+      transports: ["websocket"],
+      // auth: { token: user.accessToken }, // optional: secure with token
+    });
 
-		newSocket.on('connect', () => {
-			console.log('✅ Socket connected:', newSocket.id);
-			newSocket.emit('join-room', user._id); // Join user's room
-			setSocket(newSocket);
-			setIsSocketConnected(true);
-		});
+    newSocket.on("connect", () => {
+      newSocket.emit("join-room", user._id);
+      setSocket(newSocket);
+      setIsSocketConnected(true);
+    });
 
-		newSocket.on('disconnect', () => {
-			console.log('🔴 Socket disconnected');
-			setIsSocketConnected(false);
-		});
+    newSocket.on("disconnect", () => {
+      setIsSocketConnected(false);
+    });
 
-		return () => {
-			newSocket.disconnect();
-			setSocket(null);
-			setIsSocketConnected(false);
-		};
-	}, [user?._id]);
+    return () => {
+      newSocket.disconnect();
+      setSocket(null);
+      setIsSocketConnected(false);
+    };
+  }, [user?._id]);
 
-	useEffect(() => {
-		if (!socket) return;
+  /* ──────────  runtime socket listeners  ────────── */
+  useEffect(() => {
+    if (!socket) return;
 
-		socket.on('getUsers', (users: SocketUser[]) => {
-			setOnlineUsers(users);
-		});
+    const onUsers = (users: SocketUser[]) => setOnlineUsers(users);
+    const onNewNotif = () => {
+      dispatch(
+        apiSlice.util.invalidateTags([
+          "MyUnreadNotifications",
+          "MyUnreadNotificationsCount",
+        ])
+      );
+    };
+    const onCount = () => {
+      dispatch(apiSlice.util.invalidateTags(["MyUnreadNotificationsCount"]));
+    };
 
-		return () => {
-			socket.off('getUsers');
-		};
-	}, [socket]);
+    socket.on("getUsers", onUsers);
+    socket.on("notifications:new", onNewNotif);
+    socket.on("notifications:count", onCount);
 
-	return (
-		<SocketContext.Provider value={{ socket, isSocketConnected, onlineUsers }}>
-			{children}
-		</SocketContext.Provider>
-	);
+    return () => {
+      socket.off("getUsers", onUsers);
+      socket.off("notifications:new", onNewNotif);
+      socket.off("notifications:count", onCount);
+    };
+  }, [socket, dispatch]);
+
+  /* ──────────  provider  ────────── */
+  return (
+    <SocketContext.Provider value={{ socket, isSocketConnected, onlineUsers }}>
+      {children}
+    </SocketContext.Provider>
+  );
 };
 
 export const useSocket = () => {
-	const context = useContext(SocketContext);
-	if (!context) {
-		throw new Error('useSocket must be used within a SocketProvider');
-	}
-	return context;
+  const ctx = useContext(SocketContext);
+  if (!ctx)
+    throw new Error("useSocket must be used within a SocketContextProvider");
+  return ctx;
 };

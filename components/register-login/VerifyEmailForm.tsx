@@ -174,7 +174,7 @@ const VerifyEmailForm: React.FC<{ onSuccess?: () => void }> = ({
 
   /* ── styles ─────────────────────────────────────────────── */
   const boxBase =
-    "h-12 w-12 rounded-md bg-neutral-900 text-center text-lg font-semibold text-neutral-100 outline-none transition";
+    "h-10 w-10 rounded-md bg-neutral-900 text-center text-lg font-semibold text-neutral-100 outline-none transition";
   const boxOk =
     "border border-neutral-700 focus:ring-2 focus:ring-emerald-600/40";
   const boxErr = "border border-red-500 focus:ring-2 focus:ring-red-500/60";

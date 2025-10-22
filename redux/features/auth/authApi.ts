@@ -415,7 +415,7 @@ export const authApi = apiSlice.injectEndpoints({
     }),
 
     getTeamUsersByLevel: builder.query<{ users: any[] }, { level: number }>({
-      query: ({ level }) => `/agent/team/levels/${level}/users`,
+      query: ({ level }) => `/team/levels/${level}/users`,
     }),
 
     /* ────────── End────────── */

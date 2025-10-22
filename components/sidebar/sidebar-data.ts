@@ -9,6 +9,7 @@ import {
   LifeBuoy,
   Network,
   Settings,
+  ShieldHalf,
   SquareGanttChart,
   Upload,
   Wallet,
@@ -55,6 +56,12 @@ export const NAV_ITEMS: NavItem[] = [
   // },
   { key: "deposit", label: "Deposit", icon: Download, href: "/deposit" },
   { key: "withdraw", label: "Withdraw", icon: Upload, href: "/withdraw" },
+  {
+    key: "rank-reward",
+    label: "Rank Reward",
+    icon: ShieldHalf,
+    href: "/rank-reward",
+  },
   {
     key: "wallet",
     label: "Wallet",
