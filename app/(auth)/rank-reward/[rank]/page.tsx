@@ -54,6 +54,10 @@ export default function RankDetails({ params }: { params: { rank: RankKey } }) {
 
   async function onClaim() {
     setMsg(null);
+    if (!item) {
+      setMsg("Rank not found");
+      return;
+    }
     try {
       const res = await claim({ key: item.key }).unwrap();
       setMsg(res.message ?? `Reward $${item.rewardUsd} claimed`);
