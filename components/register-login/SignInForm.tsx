@@ -36,6 +36,11 @@ const SignInForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
       router.push("/dashboard");
     } catch (e: any) {
       console.log(e);
+      if (e?.status === 420) {
+        // ── redirect to verify page with email ─────────────────
+        const email = values.email.trim().toLowerCase();
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      }
       toast.error(e?.data?.error || "Unable to sign in", { id: tId });
     }
   });
