@@ -454,7 +454,9 @@ export const {
   useCheckOldPasswordMutation,
   useCheckOldPinMutation,
   useUpdatePinMutation,
+
   useSendNewPinEmailMutation,
+
   useLazyCheckUserByCustomIdQuery,
   useAddUserPaymentMethodMutation,
   useGetUserPaymentMethodsQuery,

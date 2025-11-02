@@ -2,8 +2,12 @@
 "use client";
 
 import SecurityVerifyDrawer from "@/components/security/SecurityVerifyDrawer";
-import { useSetSecurityPinMutation } from "@/redux/features/auth/authApi";
-import { useState } from "react";
+import {
+  useSendNewPinEmailMutation,
+  useSetSecurityPinMutation,
+} from "@/redux/features/auth/authApi";
+import { fetchBaseQueryError } from "@/redux/services/helpers";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 
@@ -86,6 +90,37 @@ export default function SetPinPage() {
     setPendingPayload(null);
   };
 
+  // send new pin email
+  const [
+    sendNewPinEmail,
+    {
+      isLoading: isLoadingSendNewPinEmail,
+      isSuccess: sentIsSuccess,
+      isError: sentIserror,
+      error: sentError,
+    },
+  ] = useSendNewPinEmailMutation();
+
+  // handle send new pin email
+  const handleSendNewPinEmail = () => {
+    const data = {
+      email: user?.email,
+    };
+    sendNewPinEmail(data);
+  };
+
+  useEffect(() => {
+    if (sentIsSuccess) {
+      toast.success("New pin sent successfully");
+    }
+    if (sentIserror) {
+      toast.error(
+        (sentError as fetchBaseQueryError).data?.error ||
+          "Error sending new pin"
+      );
+    }
+  }, [sentIsSuccess, sentIserror, sentError]);
+
   return (
     <div>
       <form onSubmit={handleSubmit} className="mx-auto max-w-md space-y-4">
@@ -106,6 +141,16 @@ export default function SetPinPage() {
               className="mt-1 w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-600/40"
               placeholder="••••••"
             />
+            <small className="mt-2 block text-xs text-right text-neutral-400">
+              Forgot your Pin?{" "}
+              <span
+                className="cursor-pointer underline hover:text-emerald-600"
+                onClick={handleSendNewPinEmail}
+              >
+                Click here{" "}
+              </span>
+              to Reset Now.
+            </small>
           </label>
         )}
 
