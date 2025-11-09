@@ -27,7 +27,14 @@ export default function SidebarUserBlock() {
     <div className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3">
       <div className="flex items-center gap-3">
         <div className="space-y-1">
-          <div className="text-sm font-semibold text-white">{user?.name}</div>
+          <div className="text-sm font-semibold text-white">
+            <span>{user?.name} </span>
+            {user?.rank !== "User" && (
+              <span className="text-xs text-neutral-400 capitalize">
+                ({user?.rank})
+              </span>
+            )}
+          </div>
           <div className="text-xs text-neutral-400 flex items-center justify-between">
             <span>{user?.email} </span>
             <span>

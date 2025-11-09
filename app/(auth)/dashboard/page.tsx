@@ -122,7 +122,7 @@ export default function DashboardPage() {
           <BalanceCard
             title="Main balance"
             balance={toAmt(user?.m_balance ?? 0)}
-            linkTitle="Deposit"
+            linkTitle="Add Funds"
             url="/deposit"
             isLoading={isLoading}
           />
