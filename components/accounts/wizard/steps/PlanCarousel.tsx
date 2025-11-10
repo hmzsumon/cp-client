@@ -20,7 +20,7 @@ export default function PlanCarousel({
       title: "Standard",
       subtitle: "Smaller lots, lower risk. Great for practicing.",
       rows: [
-        ["Min deposit", "10 USDT"],
+        ["Min deposit", "200 USDT"],
         ["Min spread", "0.2 pips"],
         ["Max leverage", "1:Unlimited"],
         ["Commission", "No commission"],
@@ -31,7 +31,7 @@ export default function PlanCarousel({
       title: "Pro",
       subtitle: "Instant or market execution with tighter spreads.",
       rows: [
-        ["Min deposit", "200 USDT"],
+        ["Min deposit", "500 USDT"],
         ["Min spread", "0.1 pips"],
         ["Max leverage", "1:Unlimited"],
         ["Commission", "No commission"],

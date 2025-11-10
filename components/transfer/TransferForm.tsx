@@ -13,6 +13,11 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 
+type AccType = "standard" | "pro" | undefined;
+
+const getMinForType = (t: AccType) =>
+  t === "pro" ? 500 : t === "standard" ? 200 : 0;
+
 export default function TransferForm() {
   const router = useRouter();
   const { user } = useSelector((s: any) => s.auth);
@@ -38,26 +43,55 @@ export default function TransferForm() {
 
   const [submit, { isLoading: isSubmitting }] = useCreateTransferMutation();
 
-  // ব্যালান্স/কারেন্সি ঠিক করো (main হলে user, নইলে account)
+  // from side currency/balance (unchanged)
   const fromCurrency =
     fromId === "main" ? mainCurrency : fromAcc?.currency || "USD";
   const fromBalance =
     fromId === "main" ? mainBalance : Number(fromAcc?.balance || 0);
+
+  // ✅ মিনিমাম amount এখন TO account-এর type অনুযায়ী
+  const toAccountType = (toAcc?.type as AccType) ?? undefined;
+  const minAmountRequired = getMinForType(toAccountType);
 
   const canSubmit =
     !!fromId &&
     !!toId &&
     fromId !== toId &&
     amount > 0 &&
+    amount >= minAmountRequired && // <-- new rule based on TO account type
     fromBalance >= amount;
 
   async function onSubmit() {
     if (!canSubmit) {
+      if (!fromId || !toId) {
+        toast.error("Please select both accounts");
+        return;
+      }
+      if (fromId === toId) {
+        toast.error("From and To accounts cannot be the same");
+        return;
+      }
+      if (amount <= 0) {
+        toast.error("Enter a valid amount");
+        return;
+      }
+      if (amount < minAmountRequired) {
+        toast.error(
+          `Minimum amount for the destination (${
+            toAccountType || "N/A"
+          }) is ${fromCurrency} ${minAmountRequired.toFixed(2)}`
+        );
+        return;
+      }
+      if (fromBalance < amount) {
+        toast.error("Insufficient balance");
+        return;
+      }
       toast.error("Please complete the form correctly");
       return;
     }
+
     try {
-      // 👇 backend-এ 'main' id সাপোর্ট করবে
       await submit({ fromId, toId, amount }).unwrap();
       toast.success("Transfer completed");
       setAmount(0);
@@ -94,6 +128,8 @@ export default function TransferForm() {
         onChange={(v) => {
           setFromId(v);
           if (v === toId) setToId("");
+
+          setAmount(0);
         }}
       />
 
@@ -110,14 +146,31 @@ export default function TransferForm() {
         accounts={accounts}
         value={toId}
         excludeId={fromId}
-        onChange={setToId}
+        onChange={(v) => {
+          setToId(v);
+          // destination বদলালে min পরিবর্তন হতে পারে, UX ভাল রাখতে amount adjust/reset করতে পারেন
+          // এখানে শুধু reset করলাম:
+          // setAmount(0);
+        }}
       />
+
+      {/* ✅ TO account ভিত্তিক মিনিমাম ইনফো */}
+      {minAmountRequired > 0 && (
+        <div className="text-xs text-neutral-500">
+          Minimum for destination ({toAccountType}):{" "}
+          <span className="text-neutral-300">
+            {fromCurrency} {minAmountRequired.toFixed(2)}
+          </span>
+        </div>
+      )}
 
       <AmountInput
         currency={fromCurrency}
         value={amount}
         onChange={setAmount}
         max={fromBalance}
+        // যদি AmountInput মিনিমাম সাপোর্ট করে, পাস করুন:
+        min={minAmountRequired}
       />
 
       <div className="pt-1">
