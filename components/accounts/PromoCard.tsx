@@ -10,9 +10,7 @@ export default function PromoCard() {
         className="w-10 h-10 object-contain"
       />
       <div>
-        <div className="text-sm font-semibold">
-          Trade with 3x fewer stop outs.
-        </div>
+        <div className="text-sm font-semibold">Trade with fewer stop outs.</div>
         <div className="text-xs text-neutral-400">
           Trade with the lowest Stop Out Level in the market.
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import socketUrl from "@/config/socketUrl"; // ✅ Use dedicated socket URL
+import socketUrl from "@/config/socketUrl"; // ✅ dedicated socket URL
 import { apiSlice } from "@/redux/features/api/apiSlice";
 import { SocketUser } from "@/types";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -34,19 +34,26 @@ export const SocketContextProvider = ({
     const newSocket = io(socketUrl, {
       transports: ["websocket"],
       // auth: { token: user.accessToken }, // optional: secure with token
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
     });
 
-    newSocket.on("connect", () => {
+    const joinRoom = () => {
       newSocket.emit("join-room", user._id);
       setSocket(newSocket);
       setIsSocketConnected(true);
-    });
+    };
 
-    newSocket.on("disconnect", () => {
-      setIsSocketConnected(false);
+    newSocket.on("connect", joinRoom);
+    newSocket.on("disconnect", () => setIsSocketConnected(false));
+    newSocket.on("connect_error", (err) => {
+      // চাইলে UI-তে দেখাতে পারেন
+      console.warn("[socket] connect_error:", err?.message || err);
     });
 
     return () => {
+      newSocket.removeListener("connect", joinRoom);
       newSocket.disconnect();
       setSocket(null);
       setIsSocketConnected(false);
@@ -57,6 +64,7 @@ export const SocketContextProvider = ({
   useEffect(() => {
     if (!socket) return;
 
+    // -------- existing listeners --------
     const onUsers = (users: SocketUser[]) => setOnlineUsers(users);
     const onNewNotif = () => {
       dispatch(
@@ -74,10 +82,86 @@ export const SocketContextProvider = ({
     socket.on("notifications:new", onNewNotif);
     socket.on("notifications:count", onCount);
 
+    // -------- NEW: trading live-sync listeners --------
+    // 1) যখন কোনো পজিশন ওপেন/ক্লোজ/মডিফাই হয়
+    const onPositionsChanged = (payload: { accountId?: string }) => {
+      // আপনার RTK Query ট্যাগ অনুযায়ী invalidate করুন
+      dispatch(
+        apiSlice.util.invalidateTags([
+          "OpenPositionsByAccount",
+          "Positions",
+          { type: "OpenPositionsByAccount", id: payload?.accountId || "ANY" },
+        ] as any)
+      );
+    };
+
+    // 2) যখন কোনো পজিশন ক্লোজ হয় (manual/stopout)
+    const onPositionClosed = (evt: {
+      id: string;
+      symbol: string;
+      pnl: number;
+      reason?: "manual" | "stopout";
+      closePrice?: number;
+      closedAt?: string;
+    }) => {
+      // কেশ ইনভ্যালিডেশন
+      dispatch(
+        apiSlice.util.invalidateTags([
+          "OpenPositionsByAccount",
+          "Positions",
+          "ClosedPositions",
+        ] as any)
+      );
+
+      // UI নোটিফাই (আপনার প্রোজেক্টে উইন্ডো ইভেন্ট ব্যবহার করেন)
+      const isProfit = Number(evt.pnl) > 0;
+      window.dispatchEvent(
+        new CustomEvent("toast", {
+          detail: {
+            kind: isProfit ? "success" : "error",
+            text: `Position closed${
+              evt.reason ? " (" + evt.reason + ")" : ""
+            }: ${evt.symbol} • P/L ${evt.pnl?.toFixed?.(2) ?? evt.pnl}`,
+          },
+        })
+      );
+
+      // চাইলে নির্দিষ্ট ইভেন্টও ছড়াতে পারেন
+      window.dispatchEvent(new CustomEvent("position:closed", { detail: evt }));
+    };
+
+    // 3) অ্যাকাউন্ট ব্যালান্স/ইকুইটি/মার্জিন আপডেট
+    const onAccountUpdate = (evt: {
+      accountId: string;
+      balance: number;
+      equity: number;
+      marginUsed: number;
+    }) => {
+      dispatch(
+        apiSlice.util.invalidateTags([
+          "Account",
+          "Accounts",
+          { type: "Account", id: evt.accountId },
+          "AccountSummary",
+        ] as any)
+      );
+
+      // UI-তে দিতে চাইলে
+      window.dispatchEvent(new CustomEvent("account:update", { detail: evt }));
+    };
+
+    socket.on("positions:changed", onPositionsChanged);
+    socket.on("position:closed", onPositionClosed);
+    socket.on("account:update", onAccountUpdate);
+
     return () => {
       socket.off("getUsers", onUsers);
       socket.off("notifications:new", onNewNotif);
       socket.off("notifications:count", onCount);
+
+      socket.off("positions:changed", onPositionsChanged);
+      socket.off("position:closed", onPositionClosed);
+      socket.off("account:update", onAccountUpdate);
     };
   }, [socket, dispatch]);
 

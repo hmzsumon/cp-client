@@ -5,51 +5,6 @@ import LiveClosedList from "./LiveClosedList";
 import LiveOpenList from "./LiveOpenList";
 import type { Position } from "./types";
 
-// const demoClosed: Position[] = [
-//   {
-//     id: "cl1",
-//     symbol: "BTC",
-//     side: "buy",
-//     lots: 1,
-//     entryPrice: 120628.74,
-//     closePrice: 120630.74,
-//     pnlUsd: 2,
-//     tag: "TP",
-//     closedAt: "2025-10-03T20:30:00.000Z",
-//     s: "BTC",
-//     status: "closed",
-//     profit: 2,
-//   },
-//   {
-//     id: "cl2",
-//     symbol: "BTC",
-//     side: "sell",
-//     lots: 1,
-//     entryPrice: 120567.55,
-//     closePrice: 120566.17,
-//     pnlUsd: 1.38,
-//     tag: "TP",
-//     closedAt: "2025-10-03T18:10:00.000Z",
-//     s: "BTC",
-//     status: "closed",
-//     profit: 1.38,
-//   },
-//   {
-//     id: "cl3",
-//     symbol: "BTC",
-//     side: "buy",
-//     lots: 1,
-//     entryPrice: 120100.17,
-//     closePrice: 120141.04,
-//     pnlUsd: 40.87,
-//     tag: "TP",
-//     closedAt: "2025-10-02T15:45:00.000Z",
-//     s: "BTC",
-//     status: "closed",
-//     profit: 40.87,
-//   },
-// ];
-
 const demoClosed: Position[] = [];
 function badge(n: number) {
   return (

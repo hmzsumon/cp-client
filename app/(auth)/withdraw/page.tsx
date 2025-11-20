@@ -42,6 +42,12 @@ export default function WithdrawPage() {
     [user?.m_balance]
   );
 
+  // balance < 200 হলে ইনপুট থেকে টাইপ নিষিদ্ধ
+  const canTypeCustomAmount = availableBalance >= 200;
+
+  // preset amounts
+  const presetAmounts = [12, 30, 50, 100, 200];
+
   const withdrawFee = useMemo(() => {
     const n = parseFloat(amount || "0");
     return isNaN(n) ? 0 : +(n * feeRate).toFixed(2);
@@ -66,6 +72,15 @@ export default function WithdrawPage() {
       return setAmountError("Amount exceeds available balance");
 
     setAmountError("");
+  };
+
+  // preset button click handler
+  const handlePresetClick = (value: number) => {
+    // ব্যালেন্স যদি কম হয়, কিছু করবে না (সেফটি)
+    if (availableBalance < value) return;
+
+    const asString = value.toString();
+    handleAmountChange(asString);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,6 +128,8 @@ export default function WithdrawPage() {
         );
       });
   };
+
+  const currentAmountNum = parseFloat(amount || "0");
 
   // UI
   return (
@@ -174,6 +191,34 @@ export default function WithdrawPage() {
                 <label className="mb-2 block text-sm font-medium text-neutral-200">
                   Amount (USDT)
                 </label>
+
+                {/* Preset amount buttons */}
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {presetAmounts.map((preset) => {
+                    const disabled = availableBalance < preset;
+                    const isActive = currentAmountNum === preset;
+
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => handlePresetClick(preset)}
+                        className={[
+                          "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                          disabled
+                            ? "cursor-not-allowed border-neutral-800 text-neutral-500 opacity-60"
+                            : isActive
+                            ? "border-emerald-600 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-600/40"
+                            : "border-neutral-700 bg-neutral-900/70 text-neutral-200 hover:border-neutral-500",
+                        ].join(" ")}
+                      >
+                        {preset === 200 ? "200+" : preset}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
                     $
@@ -182,9 +227,22 @@ export default function WithdrawPage() {
                     type="number"
                     inputMode="decimal"
                     value={amount}
-                    onChange={(e) => handleAmountChange(e.target.value)}
-                    placeholder={`${minWithdraw} or more`}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900/70 px-9 py-2.5 text-sm text-neutral-100 outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-emerald-600/40"
+                    readOnly={!canTypeCustomAmount}
+                    onChange={(e) => {
+                      // balance < 200 হলে টাইপ allow করবে না
+                      if (!canTypeCustomAmount) return;
+                      handleAmountChange(e.target.value);
+                    }}
+                    placeholder={
+                      canTypeCustomAmount
+                        ? `${minWithdraw} or more`
+                        : "Select 12, 30, 50 or 100"
+                    }
+                    className={`w-full rounded-lg border border-neutral-800 bg-neutral-900/70 px-9 py-2.5 text-sm text-neutral-100 outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-emerald-600/40 ${
+                      !canTypeCustomAmount
+                        ? "cursor-not-allowed bg-neutral-900/80"
+                        : ""
+                    }`}
                     step="0.01"
                     min={minWithdraw}
                   />

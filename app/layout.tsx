@@ -48,16 +48,16 @@ export default function RootLayout({
     <html className="light">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ background: "#0B0D12" }} // ⬅️ background এখানে
         suppressHydrationWarning={true}
       >
         <StoreProvider>
           <SocketProvider>
-            <body style={{ background: "#0B0D12" }}>
-              <Providers>{children}</Providers>
-            </body>
-            <Toaster />
+            <Providers>{children}</Providers>
           </SocketProvider>
         </StoreProvider>
+
+        <Toaster />
       </body>
     </html>
   );

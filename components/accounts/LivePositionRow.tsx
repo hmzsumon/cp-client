@@ -33,7 +33,6 @@ export default function PositionRow({
 }) {
   const sideC = p.side === "buy" ? "text-blue-400" : "text-red-400";
   const [showClose, setShowClose] = useState(false);
-  console.log(p.lots, p.volume);
   const lastPx = Number.isFinite(p.lastPrice)
     ? (p.lastPrice as number)
     : p.entryPrice;

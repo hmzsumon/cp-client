@@ -1,13 +1,14 @@
-// components/trade/parts/AccountLiveEquity.tsx
+// components/accounts/AccountLiveEquity.tsx
 "use client";
 
 /* ────────── imports ────────── */
 import LiveGroupPnlProbe from "@/components/ui/LiveGroupPnlProbe";
 import { useGetOpenPositionsByAccountQuery } from "@/redux/features/trade/tradeApi";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /* ────────── utils ────────── */
 function fmt(n: number, d = 2) {
+  if (!Number.isFinite(n)) return "—";
   return n.toLocaleString(undefined, {
     minimumFractionDigits: d,
     maximumFractionDigits: d,
@@ -17,7 +18,9 @@ function fmt(n: number, d = 2) {
 /* ────────── types ────────── */
 type Props = {
   accountId: string;
-  baseBalance: number;
+  baseBalance: number; // server balance/equity snapshot (fallback)
+  serverEquity?: number; // optional: if backend returns live equity, prefer this
+  currency?: string; // optional label (default USDT)
   className?: string;
 };
 
@@ -25,6 +28,8 @@ type Props = {
 export default function AccountLiveEquity({
   accountId,
   baseBalance,
+  serverEquity,
+  currency = "USDT",
   className = "",
 }: Props) {
   /* ────────── query open positions ────────── */
@@ -40,32 +45,45 @@ export default function AccountLiveEquity({
   }, [data]);
 
   /* ────────── group by symbol ────────── */
-  const open = positions;
   const bySymbol = useMemo(() => {
-    const g: Record<string, typeof open> = {};
-    for (const p of open) {
-      const k = (p.symbol || "").toUpperCase();
+    const g: Record<string, typeof positions> = {};
+    for (const p of positions) {
+      const k = String(p.symbol || "").toUpperCase();
       (g[k] ||= []).push(p);
     }
     return g;
-  }, [open]);
+  }, [positions]);
+
+  const symbols = useMemo(() => Object.keys(bySymbol).sort(), [bySymbol]);
 
   /* ────────── probe state ────────── */
-  const symbols = useMemo(() => Object.keys(bySymbol).sort(), [bySymbol]);
   const [pnlMap, setPnlMap] = useState<Record<string, number>>({});
+  const prevKeyRef = useRef<string>("");
 
-  /* ────────── probe callback ────────── */
-  const onProbe = (symbol: string, value: number) => {
-    setPnlMap((m) => (m[symbol] === value ? m : { ...m, [symbol]: value }));
-  };
-
-  /* ────────── seed NaN slots for loading state ────────── */
+  // seed slots with NaN when symbol set changes (for loading shimmer)
+  const symKey = symbols.join("|");
   useEffect(() => {
+    if (prevKeyRef.current === symKey) return;
+    prevKeyRef.current = symKey;
+
     const seeded: Record<string, number> = {};
-    for (const s of symbols) seeded[s] = pnlMap[s] ?? NaN;
+    for (const s of symbols) {
+      const prev = pnlMap[s];
+      seeded[s] = Number.isFinite(prev) ? prev : NaN;
+    }
     setPnlMap(seeded);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbols.join("|")]);
+  }, [symKey]);
+
+  /* ────────── probe callback ────────── */
+  const onProbe = useCallback((symbol: string, value: number) => {
+    setPnlMap((m) => {
+      const prev = m[symbol];
+      // NaN সহ সব কিছুর জন্য সঠিক equality
+      if (Object.is(prev, value)) return m;
+      return { ...m, [symbol]: value };
+    });
+  }, []);
 
   /* ────────── loading & aggregates ────────── */
   const loadingPrices =
@@ -80,7 +98,10 @@ export default function AccountLiveEquity({
     [pnlMap]
   );
 
-  const equity = baseBalance + totalLivePnl;
+  // Prefer server-equity if supplied (from a backend MTM worker), else fallback
+  const equity = Number.isFinite(serverEquity as number)
+    ? (serverEquity as number)
+    : (Number(baseBalance) || 0) + totalLivePnl;
 
   /* ────────── tone by P/L sign ────────── */
   const tone =
@@ -133,7 +154,7 @@ export default function AccountLiveEquity({
         ) : (
           <div className="flex items-baseline gap-2">
             <span className={["font-semibold", tone.text].join(" ")}>
-              {fmt(equity, 2)} USDT
+              {fmt(equity, 2)} {currency}
             </span>
             <span
               className={[

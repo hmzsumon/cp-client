@@ -23,9 +23,6 @@ export default function AmountField({
 
   return (
     <div>
-      <label className="mb-2 ml-1 block text-sm font-medium text-blue-gray-300">
-        Transfer Amount (Receive)
-      </label>
       <div className="relative">
         <input
           type="number"

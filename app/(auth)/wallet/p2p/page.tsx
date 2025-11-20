@@ -32,6 +32,7 @@ const tips = [
   "Suspicious or fraudulent transfers may lead to suspension.",
 ];
 const FEE_RATE = 0.02;
+const PRESET_AMOUNTS = [5, 15, 30, 50, 100, 200];
 
 export default function TransferPage() {
   /* ────────── state ────────── */
@@ -73,16 +74,32 @@ export default function TransferPage() {
     },
   ] = useSendMutation();
 
+  // balance < 200 হলে ইনপুট থেকে কাস্টম amount টাইপ করা যাবে না
+  const canTypeCustomAmount = availableBalance >= 200;
+
   /* ────────── handlers ────────── */
   const handleChangeUserId = (v: string) => {
     setRecipientError("");
     setUserId(v);
   };
 
-  const handleChangeAmount = (v: string) => {
+  // common updater: প্রিসেট + ইনপুট দু জায়গাতেই ব্যবহার করব
+  const updateAmount = (v: string) => {
     const safe = v.replace(/[^\d.]/g, "");
     setAmountText(safe);
     setAmountError("");
+  };
+
+  // ইনপুট থেকে চেঞ্জ (শুধু balance >= 200 হলে allow)
+  const handleChangeAmount = (v: string) => {
+    if (!canTypeCustomAmount) return;
+    updateAmount(v);
+  };
+
+  // প্রিসেট বাটন ক্লিক
+  const handlePresetClick = (value: number) => {
+    if (availableBalance < value) return; // সেফটি
+    updateAmount(String(value));
   };
 
   /* ────────── amount validation ────────── */
@@ -216,16 +233,53 @@ export default function TransferPage() {
               error={recipientError}
             />
 
-            {/* amount field */}
-            <AmountField
-              value={amountText}
-              onChange={handleChangeAmount}
-              onClear={() => setAmountText("")}
-              disabled={isDisable}
-              fee={fee}
-              available={availableBalance}
-              error={amountError}
-            />
+            {/* amount presets + field */}
+            <div className="space-y-2">
+              <label className="mb-2 ml-1 block text-sm font-medium text-blue-gray-300">
+                Transfer Amount (Receive)
+              </label>
+              {/* preset chips */}
+              <div className="flex flex-wrap gap-2">
+                {PRESET_AMOUNTS.map((preset) => {
+                  const disabled = availableBalance < preset;
+                  const isActive = amount === preset;
+
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() =>
+                        handlePresetClick(
+                          preset === 200 ? 200 : preset // 200+ বাটনের জন্য
+                        )
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                        disabled
+                          ? "cursor-not-allowed border-neutral-800 text-neutral-500 opacity-60"
+                          : isActive
+                          ? "border-emerald-600 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-600/40"
+                          : "border-neutral-700 bg-neutral-900/70 text-neutral-200 hover:border-neutral-500",
+                      ].join(" ")}
+                    >
+                      {preset === 200 ? "200+" : preset}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* amount field */}
+              <AmountField
+                value={amountText}
+                onChange={handleChangeAmount}
+                onClear={() => setAmountText("")}
+                disabled={isDisable || !canTypeCustomAmount}
+                fee={fee}
+                available={availableBalance}
+                error={amountError}
+              />
+            </div>
 
             {/* preview block (only when recipient selected) */}
             {recipient && (
@@ -255,7 +309,7 @@ export default function TransferPage() {
                 if (amountError) return toast.error(amountError);
                 handleSubmit();
               }}
-              onCancel={handleCancel} // ← new cancel
+              onCancel={handleCancel}
             />
 
             {/* resolved by chip */}

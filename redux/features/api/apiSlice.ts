@@ -29,6 +29,10 @@ export const apiSlice = createApi({
     "MyUnreadNotifications",
     "MyUnreadNotificationsCount",
     "AdminNotifications",
+    "OpenPositionsByAccount",
+    "Account",
+    "PositionsByAccount",
+    "Position",
   ],
   endpoints: (builder) => ({}),
 });
