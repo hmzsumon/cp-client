@@ -29,7 +29,9 @@ function toUiPosition(p: any): Position {
     maniClosePrice: Number.isFinite(p.manipulateClosePrice)
       ? Number(p.manipulateClosePrice)
       : undefined,
+    is_loss: p.is_loss,
 
+    stopLoss: Number.isFinite(p.stopLoss) ? Number(p.stopLoss) : undefined,
     /* ⬇️ NEW: robust closedAt mapping (adjust if your API differs) */
     closedAt:
       p.closedAt ||
@@ -46,7 +48,7 @@ function toUiPosition(p: any): Position {
 export function useFilteredClosedPositions() {
   const { account, loading: accountLoading } = useSelectedAiAccount();
   const { data, isLoading, isFetching } = useGetClosedAiPositionsQuery();
-  console.log({ data });
+  // console.log({ data });
 
   const items: Position[] = useMemo(() => {
     if (!account) return [];

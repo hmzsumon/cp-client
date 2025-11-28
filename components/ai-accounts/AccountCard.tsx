@@ -2,11 +2,14 @@
    AccountCard — shows single account (chips + balance + actions)
 ────────────────────────────────────────────────────────────────────────── */
 
-import { IAccount } from "@/redux/features/ai-account/ai-accountApi";
-
+import {
+  IAccount,
+  useAddFundToAiAccountMutation,
+} from "@/redux/features/ai-account/ai-accountApi";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 import AiAccountLiveEquity from "../ai/AiAccoountLiveEquity";
 import OpenAccountFab from "./OpenAccountFab";
 import OpenAccountWizard from "./wizard/OpenAccountWizard";
@@ -18,8 +21,40 @@ export default function AccountCard({
   acc: IAccount;
   onOpenPicker: () => void;
 }) {
-  const router = useRouter();
+  const [addFund, { isLoading: isAddingFund }] =
+    useAddFundToAiAccountMutation();
+  const { user } = useSelector((s: any) => s.auth);
+  const nedAmount = Number(acc.planPrice - (acc.balance ?? 0));
   const [openWizard, setOpenWizard] = useState(false);
+
+  const handleAddFunds = async () => {
+    if (nedAmount <= 0) {
+      toast.error("This account is already fully funded.");
+      return;
+    }
+
+    const toastId = toast.loading("Adding funds to your AI account...");
+
+    try {
+      const res: any = await addFund({
+        id: String(acc._id),
+        amount: nedAmount,
+      }).unwrap();
+
+      const msg =
+        res?.message ||
+        `Successfully added ${nedAmount} USDT to your AI account.`;
+
+      toast.success(msg, { id: toastId });
+    } catch (err: any) {
+      const msg =
+        err?.data?.message ||
+        err?.message ||
+        "Failed to add funds. Please try again.";
+      toast.error(msg, { id: toastId });
+    }
+  };
+
   return (
     <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-3 py-4">
       <div className="flex items-center justify-between">
@@ -41,6 +76,31 @@ export default function AccountCard({
           {acc.plan}
         </span>
       </div>
+
+      {/* ── Inactive alert ── */}
+      {acc.status !== "active" && (
+        <div>
+          <div className="mt-3 text-center rounded-lg bg-yellow-800/20 px-3 py-2 text-xs text-yellow-300 border border-yellow-700">
+            <h2>
+              This account is {acc.status}. Please add{" "}
+              <span className="font-semibold text-yellow-200">
+                ({nedAmount} USDT)
+              </span>{" "}
+              funds to activate your account.
+            </h2>
+          </div>
+          {/* ── Button for adding funds ── */}
+          <div className="mt-2 text-center">
+            <button
+              className="w-full rounded-lg bg-yellow-600/80 px-4 py-2 text-sm font-medium text-yellow-100 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={user?.m_balance <= 0 || isAddingFund}
+              onClick={handleAddFunds}
+            >
+              {isAddingFund ? "Adding..." : "Add Funds"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Live equity */}
       <div className="mt-4 flex items-center justify-between">

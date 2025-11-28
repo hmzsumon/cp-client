@@ -27,11 +27,8 @@ export default function PositionRow({
       ? "text-emerald-400 border-emerald-500/30"
       : "text-red-400 border-red-500/30";
 
-  const fixedPnl = Number.isFinite(p.profit)
-    ? (p.profit as number)
-    : Number.isFinite(p.profit)
-    ? (p.profit as number)
-    : 0;
+  const rawPnl = p.is_loss ? p.pnlUsd : p.profit;
+  const fixedPnl = Number.isFinite(rawPnl as number) ? (rawPnl as number) : 0;
 
   const pnlTone = fixedPnl >= 0 ? "text-emerald-400" : "text-red-400";
 

@@ -28,7 +28,7 @@ export default function ClosedDetailsDrawer({
   onOpenChange: (v: boolean) => void;
   position?: Position | null;
 }) {
-  console.log(position);
+  // console.log(position);
   if (!position) return null;
 
   const sideTag =
@@ -37,11 +37,8 @@ export default function ClosedDetailsDrawer({
       : "text-red-400 border-red-500/30";
 
   /* ────────── P/L and shares ────────── */
-  const pnl = Number.isFinite(position.profit)
-    ? (position.profit as number)
-    : Number.isFinite(position.profit)
-    ? (position.profit as number)
-    : 0;
+  const rawPnl = position.is_loss ? position.pnlUsd : position.profit;
+  const pnl = Number.isFinite(rawPnl as number) ? (rawPnl as number) : 0;
 
   const pnlTone = pnl >= 0 ? "text-emerald-400" : "text-red-400";
 
@@ -106,25 +103,27 @@ export default function ClosedDetailsDrawer({
 
             {/* Only show shares prominently when profit > 0 */}
             <div className="mt-2 rounded-lg border border-neutral-800 bg-neutral-900/60 p-3">
-              <div className="mb-2 text-xs text-neutral-400">
-                Profit split: <b>60%</b> to user, <b>40%</b> to platform
-              </div>
-
-              <Row k="Platform share (40%)">
-                <span className="font-semibold text-neutral-300">
-                  {fmt2(platformShare)} USDT
-                </span>
-              </Row>
-
-              <Row k="Credited to main balance (60%)">
-                <span className="font-semibold text-emerald-400">
-                  {fmt2(userShare)} USDT
-                </span>
-              </Row>
-
-              {pnl < 0 && (
+              {position?.is_loss ? (
                 <div className="mt-2 text-[11px] text-neutral-400">
                   Loss trade: no credit is added to user balance.
+                </div>
+              ) : (
+                <div>
+                  <div className="mb-2 text-xs text-neutral-400">
+                    Profit split: <b>60%</b> to user, <b>40%</b> to platform
+                  </div>
+
+                  <Row k="Platform share (40%)">
+                    <span className="font-semibold text-neutral-300">
+                      {fmt2(platformShare)} USDT
+                    </span>
+                  </Row>
+
+                  <Row k="Credited to main balance (60%)">
+                    <span className="font-semibold text-emerald-400">
+                      {fmt2(userShare)} USDT
+                    </span>
+                  </Row>
                 </div>
               )}
             </div>

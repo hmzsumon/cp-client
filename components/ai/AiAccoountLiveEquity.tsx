@@ -125,7 +125,7 @@ export default function AiAccountLiveEquity({
       {/* ────────── equity pill ────────── */}
       <div
         className={[
-          "flex items-center justify-center gap-3 px-3 py-1.5 rounded-full border border-neutral-700 shadow-sm",
+          "flex items-center justify-center gap-3 px-3 py-1.5 rounded-xl border border-neutral-700 shadow-sm",
           "ring-1 transition-colors",
           tone.ring,
           tone.bg,

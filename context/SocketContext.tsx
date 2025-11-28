@@ -107,6 +107,8 @@ export const SocketContextProvider = ({
       // কেশ ইনভ্যালিডেশন
       dispatch(
         apiSlice.util.invalidateTags([
+          "Accounts",
+          "Account",
           "OpenPositionsByAccount",
           "Positions",
           "ClosedPositions",

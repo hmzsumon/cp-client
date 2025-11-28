@@ -34,11 +34,9 @@ export default function AccountPickerSheet({
 
   if (!open) return null;
   const items = (data?.items ?? []) as IAccount[];
+  console.log({ items });
 
-  const filtered = items.filter((a) => {
-    if (currentTab === "active") return a.status === "active";
-    return a.status === "active";
-  });
+  const filtered = items.filter((a) => a.status === currentTab);
 
   return (
     <div className="fixed inset-0 z-[60]">
@@ -51,7 +49,7 @@ export default function AccountPickerSheet({
 
         {/* tabs */}
         <div className="px-4 flex gap-8 border-b border-neutral-800">
-          {(["active", "closed"] as AccountTab[]).map((t) => (
+          {(["active", "inactive", "closed"] as AccountTab[]).map((t) => (
             <button
               key={t}
               onClick={() => dispatch(setAccountTab(t))}

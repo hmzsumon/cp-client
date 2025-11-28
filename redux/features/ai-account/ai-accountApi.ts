@@ -23,6 +23,7 @@ export interface IAccount {
   mode: "ai";
   plan: string;
   equity: number;
+  planPrice: number;
 }
 
 export interface Position {
@@ -131,6 +132,18 @@ export const aiAccountApi = apiSlice.injectEndpoints({
       }),
       providesTags: ["Positions"],
     }),
+    /* ────────── add fund to ai account ────────── */
+    addFundToAiAccount: builder.mutation<
+      { success: boolean; message: string },
+      { id: string; amount: number }
+    >({
+      query: ({ id, amount }) => ({
+        url: "/add-fund-to-ai-account",
+        method: "POST",
+        body: { accountId: id, amount },
+      }),
+      invalidatesTags: ["Accounts", "User"],
+    }),
   }),
 });
 
@@ -145,4 +158,5 @@ export const {
   useGetAllAiPositionsQuery,
   useGetClosedAiPositionsQuery,
   useGetOpenAiPositionsByPlanQuery,
+  useAddFundToAiAccountMutation,
 } = aiAccountApi;

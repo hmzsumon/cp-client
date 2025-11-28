@@ -22,6 +22,7 @@ function toUiPosition(p: any): Position {
     tag: p.takeProfit ? "TP" : null,
     status: p.status || "open",
     profit: Number(p.profit ?? 0),
+    is_loss: p.is_loss,
   };
 }
 
