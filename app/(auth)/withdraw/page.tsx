@@ -18,8 +18,17 @@ import {
 } from "react-icons/fi";
 import { useSelector } from "react-redux";
 
+const REQUIRED_MEMBERS = 3;
+
 export default function WithdrawPage() {
   const { user } = useSelector((state: any) => state.auth);
+
+  const activatedMembers = user?.addNewMember ?? 0;
+
+  const isWithdrawBlocked =
+    user?.agentName === "Default Agent" && (user?.addNewMember ?? 0) < 3;
+
+  const remainingToActivate = Math.max(0, REQUIRED_MEMBERS - activatedMembers);
 
   // Create request
   const [createWithdrawRequest, { isLoading: isCreateLoading }] =
@@ -326,12 +335,38 @@ export default function WithdrawPage() {
                   !walletAddress ||
                   user?.is_withdraw_block ||
                   !availableBalance ||
-                  isCreateLoading
+                  isCreateLoading ||
+                  isWithdrawBlocked
                 }
                 className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isCreateLoading ? "Processing…" : "Request withdrawal"}
               </button>
+
+              {/* block withdraw message */}
+              {isWithdrawBlocked && (
+                <div className="mt-3 rounded-xl border border-red-700/40 bg-red-500/10 p-3">
+                  <div className="flex items-start gap-2 text-red-200">
+                    <FiAlertCircle className="mt-0.5 shrink-0 text-red-300" />
+                    <div className="text-xs leading-relaxed">
+                      <p className="font-semibold text-red-100">
+                        Withdrawals are currently locked
+                      </p>
+                      <p>
+                        Please activate{" "}
+                        <span className="font-semibold">
+                          {remainingToActivate} more user
+                          {remainingToActivate > 1 ? "s" : ""}
+                        </span>{" "}
+                        to request a withdrawal.
+                      </p>
+                      <p className="mt-1 text-[11px] text-red-200/80">
+                        Activated: {activatedMembers}/{REQUIRED_MEMBERS}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {user?.is_withdraw_block && (
                 <p className="mt-1 flex items-center text-xs text-red-500">
