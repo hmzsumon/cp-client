@@ -57,9 +57,9 @@ export default function AccountCard({
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-        <Link href="/trade" className="w-full">
+        <Link href="/live-trade" className="w-full">
           <button className="rounded-lg bg-neutral-800 w-full py-2">
-            Trade
+            Live Trade
           </button>
         </Link>
         <Link href="/transfer" className="w-full">

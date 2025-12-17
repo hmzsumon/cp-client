@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useSelector } from "react-redux";
 import LiveAccountWrapper from "../accounts/LiveAccountWrapper";
 import AiAccountsPage from "../ai-accounts/AiAccountPage";
 import Activities from "./Activities";
-import CryptoAssetCard from "./CryptoAssetCard";
+import CryptoTabContent from "./CryptoTabContent";
 
 type TabKey = "crypto" | "account" | "activities";
 
@@ -83,51 +82,6 @@ function TabButton({ label, isActive, onClick }: TabButtonProps) {
 }
 
 /* ----- এই দুইটা কম্পোনেন্টে তুমি নিজের আসল UI বসিয়ে দাও ----- */
-
-function CryptoTabContent() {
-  const { user } = useSelector((state: any) => state.auth);
-  return (
-    <div className="text-zinc-100 text-sm">
-      <div className="space-y-3">
-        <CryptoAssetCard
-          symbol="USDT"
-          name="TetherUS"
-          balance={user?.m_balance ?? 0}
-          iconSrc="/images/icons/usdt_icon.png" // public/icons/usdt.svg
-          onEarn={() => console.log("Earn clicked")}
-          onTrade={() => console.log("Trade clicked")}
-        />
-
-        <CryptoAssetCard
-          symbol="TRX"
-          name="Tron"
-          balance={0}
-          iconSrc="/images/icons/trx_icon.png" // public/icons/usdt.svg
-          onEarn={() => console.log("Earn clicked")}
-          onTrade={() => console.log("Trade clicked")}
-        />
-
-        <CryptoAssetCard
-          symbol="POL"
-          name="Poligon"
-          balance={0}
-          iconSrc="/images/icons/pol_icon.png" // public/icons/usdt.svg
-          onEarn={() => console.log("Earn clicked")}
-          onTrade={() => console.log("Trade clicked")}
-        />
-
-        <CryptoAssetCard
-          symbol="FDUSD"
-          name="First Digital USD"
-          balance={0}
-          iconSrc="/images/icons/fdusd_icon.png" // public/icons/usdt.svg
-          onEarn={() => console.log("Earn clicked")}
-          onTrade={() => console.log("Trade clicked")}
-        />
-      </div>
-    </div>
-  );
-}
 
 function AccountTabContent() {
   return (

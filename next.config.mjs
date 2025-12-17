@@ -3,6 +3,16 @@
 const nextConfig = {
   reactStrictMode: false,
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "coin-images.coingecko.com",
+        pathname: "/coins/images/**",
+      },
+    ],
+  },
+
   // ── keep your Sass & rewrites ──────────────────────────────
   sassOptions: {
     additionalData: `$var: red;`,
@@ -30,7 +40,6 @@ const nextConfig = {
             svgo: true,
             svgoConfig: {
               plugins: [
-                // remove hard-coded fill/stroke so color can be controlled via CSS currentColor
                 { name: "removeAttrs", params: { attrs: "(fill|stroke)" } },
               ],
             },
