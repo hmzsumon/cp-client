@@ -15,7 +15,7 @@ export const PLANS = [
     amount: 30,
     rows: [
       ["Min deposit", "30 USD"],
-      ["Profit target", "2% - 4% per day"],
+      ["Profit target", "1% - 4% per day"],
       ["Max leverage", "1:Unlimited"],
     ],
   },
@@ -26,7 +26,7 @@ export const PLANS = [
     amount: 50,
     rows: [
       ["Min deposit", "50 USD"],
-      ["Profit target", "2% - 4% per day"],
+      ["Profit target", "1% - 4% per day"],
       ["Max leverage", "1:Unlimited"],
     ],
   },
@@ -37,7 +37,7 @@ export const PLANS = [
     amount: 80,
     rows: [
       ["Min deposit", "80 USD"],
-      ["Profit target", "2% - 4% per day"],
+      ["Profit target", "1% - 4% per day"],
       ["Max leverage", "1:Unlimited"],
     ],
   },
@@ -48,7 +48,7 @@ export const PLANS = [
     amount: 100,
     rows: [
       ["Min deposit", "100 USD"],
-      ["Profit target", "2% - 4% per day"],
+      ["Profit target", "1% - 4% per day"],
       ["Max leverage", "1:Unlimited"],
     ],
   },
@@ -59,7 +59,7 @@ export const PLANS = [
     amount: 200,
     rows: [
       ["Min deposit", "200 USD"],
-      ["Profit target", "2% - 4% per day"],
+      ["Profit target", "1% - 4% per day"],
       ["Max leverage", "1:Unlimited"],
     ],
   },
@@ -70,7 +70,7 @@ export const PLANS = [
     amount: 500,
     rows: [
       ["Min deposit", "500 USD"],
-      ["Profit target", "2% - 4% per day"],
+      ["Profit target", "1% - 4% per day"],
       ["Max leverage", "1:Unlimited"],
     ],
   },
@@ -81,7 +81,7 @@ export const PLANS = [
     amount: 1000,
     rows: [
       ["Min deposit", "1000 USD"],
-      ["Profit target", "2% - 4% per day"],
+      ["Profit target", "1% - 4% per day"],
       ["Max leverage", "1:Unlimited"],
     ],
   },

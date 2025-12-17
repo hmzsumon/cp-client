@@ -34,7 +34,6 @@ export default function AccountPickerSheet({
 
   if (!open) return null;
   const items = (data?.items ?? []) as IAccount[];
-  console.log({ items });
 
   const filtered = items.filter((a) => a.status === currentTab);
 

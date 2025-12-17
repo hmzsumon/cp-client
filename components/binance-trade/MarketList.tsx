@@ -7,15 +7,15 @@ type SymbolKey = (typeof SYMBOLS)[number];
 interface MiniTickerRaw {
   s: string; // symbol
   c: string; // last price
-  P: string; // change percent
+  o: string; // open price
   v: string; // volume
   [key: string]: unknown;
 }
 
 interface MiniTicker {
-  lastPrice: string;
-  changePercent: string;
-  volume: string;
+  lastPrice: number;
+  changePercent: number;
+  volume: number;
 }
 
 type TickerMap = Record<SymbolKey, MiniTicker>;
@@ -35,15 +35,26 @@ const MarketList: React.FC = () => {
 
         setTickers((prev) => {
           const next: Partial<TickerMap> = { ...prev };
+
           arr.forEach((t) => {
-            if (SYMBOLS.includes(t.s as SymbolKey)) {
-              next[t.s as SymbolKey] = {
-                lastPrice: t.c,
-                changePercent: t.P,
-                volume: t.v,
-              };
+            if (!SYMBOLS.includes(t.s as SymbolKey)) return;
+
+            const last = parseFloat(t.c);
+            const open = parseFloat(t.o);
+            const vol = parseFloat(t.v);
+
+            let changePercent = 0;
+            if (!Number.isNaN(last) && !Number.isNaN(open) && open !== 0) {
+              changePercent = ((last - open) / open) * 100;
             }
+
+            next[t.s as SymbolKey] = {
+              lastPrice: Number.isNaN(last) ? 0 : last,
+              changePercent: Number.isNaN(changePercent) ? 0 : changePercent,
+              volume: Number.isNaN(vol) ? 0 : vol,
+            };
           });
+
           return next;
         });
       } catch (error) {
@@ -77,7 +88,7 @@ const MarketList: React.FC = () => {
       <div className="divide-y divide-slate-800">
         {SYMBOLS.map((symbol) => {
           const t = tickers[symbol];
-          const change = t ? parseFloat(t.changePercent) : 0;
+          const change = t?.changePercent ?? 0;
           const isDown = change < 0;
 
           return (
@@ -92,7 +103,7 @@ const MarketList: React.FC = () => {
                 <div className="mt-[2px] text-[11px] text-slate-500">
                   Vol{" "}
                   {t
-                    ? Number(t.volume).toLocaleString(undefined, {
+                    ? t.volume.toLocaleString(undefined, {
                         maximumFractionDigits: 2,
                       })
                     : "--"}
@@ -104,7 +115,7 @@ const MarketList: React.FC = () => {
                     isDown ? "text-red-400" : "text-emerald-400"
                   }`}
                 >
-                  {t ? Number(t.lastPrice).toLocaleString() : "--"}
+                  {t ? t.lastPrice.toLocaleString() : "--"}
                 </div>
                 <div
                   className={`mt-[2px] text-[11px] ${
