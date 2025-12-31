@@ -8,16 +8,17 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import type { OrderType, Side } from "./TradeLayout";
 
+// Amount থেকে ফি = amount * 0.000075
+// Amount = 1000 => 0.075
+const FEE_RATE = 0.000075; // 0.0075%
+const MIN_NOTIONAL = 5; // ✅ Minimum total (USDT)
+
 interface OrderFormProps {
   side: Side;
   orderType: OrderType;
   symbol: string;
   lastPrice: string | null;
 }
-
-// Amount থেকে ফি = amount * 0.000075
-// Amount = 1000 => 0.075
-const FEE_RATE = 0.000075; // 0.0075%
 
 const OrderForm: React.FC<OrderFormProps> = ({
   side,
@@ -49,13 +50,11 @@ const OrderForm: React.FC<OrderFormProps> = ({
   // 👉 Spot wallet balances (SELL এর জন্য)
   const { data: spotBalances, isLoading: isBalancesLoading } =
     useGetSpotBalancesQuery(undefined, {
-      skip: !user?._id, // লগইন না থাকলে কল করবে না
+      skip: !user?._id,
     });
 
   const baseAvailable =
-    spotBalances?.find((w) => w.symbol === normalizedSymbol)?.qty ?? 0;
-
-  const available = isBuy ? quoteAvailable : baseAvailable;
+    spotBalances?.find((w: any) => w.symbol === normalizedSymbol)?.qty ?? 0;
 
   // symbol change হলে ফর্ম রিসেট
   useEffect(() => {
@@ -75,41 +74,57 @@ const OrderForm: React.FC<OrderFormProps> = ({
     if (lastPrice) setPrice(lastPrice);
   };
 
+  // backend এ কেবল "market" | "limit" সাপোর্ট করলে:
+  const backendOrderType: "market" | "limit" =
+    orderType === "market" ? "market" : "limit";
+
+  const priceNum = parseFloat(price || "0") || 0;
+  const amountNum = parseFloat(amount || "0") || 0;
+
+  // ✅ market হলে total/slider হিসাব করার জন্য lastPrice কে effective price ধরা
+  const effectivePriceNum =
+    backendOrderType === "market"
+      ? parseFloat(lastPrice || price || "0") || 0
+      : priceNum;
+
+  const totalNum =
+    effectivePriceNum && amountNum ? effectivePriceNum * amountNum : 0;
+  const total = totalNum ? totalNum.toFixed(2) : "";
+
+  const maxBuyBase =
+    isBuy && effectivePriceNum > 0 ? quoteAvailable / effectivePriceNum : 0;
+  const maxSellBase = !isBuy ? baseAvailable : 0;
+  const maxBase = isBuy ? maxBuyBase : maxSellBase;
+
+  const feeBase = amountNum * FEE_RATE;
+  const feeDisplay = feeBase ? feeBase.toFixed(3) : "0.000";
+
+  // ✅ Total যদি ৫ USDT এর নিচে হয়, order block + warning
+  const isBelowMinNotional = totalNum > 0 && totalNum < MIN_NOTIONAL;
+
   // Slider => Avbl ব্যালান্সের কত % ব্যবহার করব
   const handleSlider = (value: number): void => {
     setSlider(value);
     const pct = value / 100;
 
     if (isBuy) {
-      const priceNumeric = parseFloat(price || "0") || 0;
-      if (!priceNumeric) {
+      const p =
+        backendOrderType === "market"
+          ? parseFloat(lastPrice || price || "0") || 0
+          : parseFloat(price || "0") || 0;
+
+      if (!p) {
         setAmount("");
         return;
       }
-      const amtBase = (quoteAvailable * pct) / priceNumeric;
+
+      const amtBase = (quoteAvailable * pct) / p;
       setAmount(amtBase ? amtBase.toFixed(6) : "");
     } else {
       const amtBase = baseAvailable * pct;
       setAmount(amtBase ? amtBase.toFixed(6) : "");
     }
   };
-
-  const priceNum = parseFloat(price || "0") || 0;
-  const amountNum = parseFloat(amount || "0") || 0;
-
-  const totalNum = priceNum && amountNum ? priceNum * amountNum : 0;
-  const total = totalNum ? totalNum.toFixed(2) : "";
-
-  const maxBuyBase = isBuy && priceNum > 0 ? quoteAvailable / priceNum : 0;
-  const maxSellBase = !isBuy ? baseAvailable : 0;
-  const maxBase = isBuy ? maxBuyBase : maxSellBase;
-
-  const feeBase = amountNum * FEE_RATE;
-  const feeDisplay = feeBase ? feeBase.toFixed(3) : "0.000"; // ex: 0.075
-
-  // backend এ কেবল "market" | "limit" সাপোর্ট করলে:
-  const backendOrderType: "market" | "limit" =
-    orderType === "market" ? "market" : "limit";
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
@@ -126,8 +141,20 @@ const OrderForm: React.FC<OrderFormProps> = ({
       return;
     }
 
+    // market এ lastPrice না থাকলে price unavailable
+    if (!effectivePriceNum || effectivePriceNum <= 0) {
+      toast.error("Price unavailable. Try again.");
+      return;
+    }
+
     if (backendOrderType === "limit" && (!priceNum || priceNum <= 0)) {
       toast.error("Enter valid price for limit order");
+      return;
+    }
+
+    // ✅ Minimum total check
+    if (totalNum < MIN_NOTIONAL) {
+      toast.error(`Minimum order size is ${MIN_NOTIONAL} ${quoteAsset}`);
       return;
     }
 
@@ -146,17 +173,22 @@ const OrderForm: React.FC<OrderFormProps> = ({
         price: backendOrderType === "limit" ? priceNum : undefined,
       }).unwrap();
 
+      const executedPrice =
+        backendOrderType === "market"
+          ? Number(res?.order?.price ?? effectivePriceNum)
+          : priceNum;
+
       toast.success(
         `${side === "buy" ? "Bought" : "Sold"} ${amountNum.toFixed(
           6
-        )} ${baseAsset} @ ${priceNum || res.order.price}`
+        )} ${baseAsset} @ ${executedPrice}`
       );
 
       // ফর্ম রিসেট
       setAmount("");
       setSlider(0);
       if (backendOrderType !== "limit") {
-        setPrice(""); // market হলে backend price ব্যবহার হবে
+        setPrice(""); // market হলে backend/lastPrice ব্যবহার হবে
       }
       console.log("order result:", res);
     } catch (err: any) {
@@ -186,7 +218,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             onChange={(e) => setPrice(e.target.value)}
             className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
             placeholder="0.00"
-            disabled={true} // market এ ইনপুট বন্ধ
+            disabled={orderType === "market"} // ✅ market এ ইনপুট বন্ধ, limit এ খোলা
           />
           <button
             type="button"
@@ -209,6 +241,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
           className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
           placeholder="0.000000"
         />
+
+        {/* ✅ Warning under Amount input */}
+        {isBelowMinNotional && (
+          <p className="text-[10px] text-amber-400">
+            Total must be at least {MIN_NOTIONAL} {quoteAsset} (now ~
+            {total || "0.00"} {quoteAsset}). Increase amount.
+          </p>
+        )}
       </div>
 
       {/* Slider */}
@@ -242,6 +282,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
           placeholder="0.00"
           className="w-full cursor-default rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-50"
         />
+
+        {/* ✅ Warning under Total input */}
+        {isBelowMinNotional && (
+          <p className="text-[10px] text-amber-400">
+            Minimum order size is {MIN_NOTIONAL} {quoteAsset}. Increase amount.
+          </p>
+        )}
       </div>
 
       {/* Avbl + Max + Est. Fee */}
@@ -256,7 +303,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <span className="text-slate-500">Loading...</span>
           ) : (
             <span className="font-medium text-slate-100">
-              {baseAvailable.toFixed(8)} {baseAsset}
+              {Number(baseAvailable).toFixed(8)} {baseAsset}
             </span>
           )}
         </div>
@@ -277,7 +324,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
       {/* Submit */}
       <button
         type="submit"
-        disabled={isLoading || (!isBuy && isBalancesLoading)}
+        disabled={
+          isLoading || (!isBuy && isBalancesLoading) || isBelowMinNotional
+        }
         className={`mt-1 w-full rounded-lg py-2.5 text-sm font-semibold shadow-md shadow-black/40 transition ${
           isBuy
             ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:bg-emerald-700/60"
