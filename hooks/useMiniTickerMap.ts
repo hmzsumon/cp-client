@@ -1,52 +1,69 @@
 // hooks/useMiniTickerMap.ts
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-interface MiniTickerRaw {
-  s: string; // symbol
-  c: string; // last price
-}
+type CombinedMiniTickerMsg = {
+  stream: string;
+  data: { s: string; c: string };
+};
 
 export function useMiniTickerMap(symbols: string[]): Record<string, number> {
   const [prices, setPrices] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    if (!symbols.length) return;
-
-    const wanted = new Set(symbols.map((s) => s.toUpperCase()));
-
-    const ws = new WebSocket(
-      "wss://stream.binance.com:9443/ws/!miniTicker@arr"
+  const wantedList = useMemo(() => {
+    const set = new Set(
+      (symbols || [])
+        .map((s) =>
+          String(s || "")
+            .toUpperCase()
+            .trim()
+        )
+        .filter(Boolean)
     );
+    return Array.from(set).sort(); // stable
+  }, [symbols]);
+
+  useEffect(() => {
+    if (!wantedList.length) return;
+
+    const streams = wantedList
+      .map((s) => `${s.toLowerCase()}@miniTicker`)
+      .join("/");
+    const url = `wss://stream.binance.com:9443/stream?streams=${streams}`;
+
+    const ws = new WebSocket(url);
 
     ws.onmessage = (event: MessageEvent<string>) => {
       try {
-        const arr = JSON.parse(event.data) as MiniTickerRaw[];
-        if (!Array.isArray(arr)) return;
+        const msg = JSON.parse(event.data) as CombinedMiniTickerMsg;
+        const sym = String(msg?.data?.s || "").toUpperCase();
+        const last = Number(msg?.data?.c);
+
+        if (!sym || !Number.isFinite(last)) return;
 
         setPrices((prev) => {
-          const next = { ...prev };
-          for (const t of arr) {
-            const sym = t.s.toUpperCase();
-            if (!wanted.has(sym)) continue;
-
-            const last = Number(t.c);
-            if (!Number.isNaN(last)) {
-              next[sym] = last;
-            }
-          }
-          return next;
+          if (prev[sym] === last) return prev;
+          return { ...prev, [sym]: last };
         });
       } catch (e) {
-        console.error("miniTicker wallet parse error", e);
+        console.error("miniTicker parse error", e);
       }
     };
 
-    return () => {
-      ws.close();
+    ws.onerror = (e) => {
+      console.error("miniTicker ws error", e);
+      try {
+        ws.close();
+      } catch {}
     };
-  }, [symbols.join(",")]);
+
+    return () => {
+      try {
+        ws.close();
+      } catch {}
+    };
+  }, [wantedList.join(",")]);
 
   return prices;
 }

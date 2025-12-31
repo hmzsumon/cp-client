@@ -10,7 +10,7 @@ type CryptoAssetCardProps = {
   quoteSymbol?: string;
   quoteValue?: number;
   avgPrice?: number;
-  todayPnl?: number; // 🔥 নতুন
+  todayPnl?: number;
   iconSrc?: string;
   onEarn?: () => void;
   onTrade?: () => void;
@@ -25,7 +25,6 @@ export default function CryptoAssetCard({
   avgPrice,
   todayPnl,
   iconSrc,
-  onEarn,
   onTrade,
 }: CryptoAssetCardProps) {
   const displayBalance = Number(balance || 0).toLocaleString(undefined, {
@@ -44,16 +43,22 @@ export default function CryptoAssetCard({
       ? `${avgPrice.toFixed(4)} ${quoteSymbol}`
       : undefined;
 
-  // 🔥 Today PNL (USDT)
   const pnlValue =
     typeof todayPnl === "number" && !Number.isNaN(todayPnl) ? todayPnl : 0;
   const pnlIsPositive = pnlValue >= 0;
 
   const src = iconSrc || "/images/icons/default-coin.png";
 
+  // ✅ pass data via query params
+  const earnHref =
+    `/staking-earn?symbol=${encodeURIComponent(symbol)}` +
+    `&name=${encodeURIComponent(name)}` +
+    `&balance=${encodeURIComponent(String(balance ?? 0))}` +
+    `&iconSrc=${encodeURIComponent(src)}`;
+
   return (
     <div className="flex items-center justify-between rounded-2xl border border-zinc-800/70 bg-[#020617] px-4 py-3 hover:border-zinc-600 hover:bg-[#020617]/90 transition-colors">
-      {/* LEFT: icon + symbol + name */}
+      {/* LEFT */}
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#111827]">
           <Image
@@ -75,7 +80,7 @@ export default function CryptoAssetCard({
         </div>
       </div>
 
-      {/* RIGHT: amounts + PNL + buttons */}
+      {/* RIGHT */}
       <div className="flex flex-col items-end gap-1">
         <div className="text-sm font-semibold text-white">{displayBalance}</div>
 
@@ -83,7 +88,6 @@ export default function CryptoAssetCard({
           <div className="text-[11px] text-zinc-400">{displayQuote}</div>
         )}
 
-        {/* Today's PNL */}
         <div className="mt-1 text-[11px] text-zinc-500">
           Today&apos;s PNL{" "}
           <span className={pnlIsPositive ? "text-emerald-400" : "text-red-400"}>
@@ -91,7 +95,6 @@ export default function CryptoAssetCard({
           </span>
         </div>
 
-        {/* Average price */}
         <div className="text-[11px] text-zinc-500">
           Average Price{" "}
           <span className="text-zinc-300">
@@ -100,17 +103,12 @@ export default function CryptoAssetCard({
         </div>
 
         <div className="mt-2 flex gap-2">
-          <button
-            onClick={onEarn}
-            disabled={!onEarn}
-            className={`rounded-md px-4 py-1 text-xs font-medium transition-colors ${
-              onEarn
-                ? "bg-[#374151] text-zinc-100 hover:bg-[#4B5563]"
-                : "bg-[#111827] text-zinc-500 cursor-not-allowed"
-            }`}
-          >
-            Earn
-          </button>
+          {/* ✅ Earn now sends data */}
+          <Link href={earnHref}>
+            <button className="rounded-md px-4 py-1 text-xs font-medium transition-colors bg-[#374151] text-zinc-100 hover:bg-[#4B5563]">
+              Earn
+            </button>
+          </Link>
 
           <Link href="/trade">
             <button

@@ -6,6 +6,7 @@ import {
   Clock4,
   Download,
   Grid2x2,
+  HandCoins,
   LifeBuoy,
   Network,
   Settings,
@@ -39,6 +40,13 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Ai Accounts",
     icon: Bot,
     href: "/ai-accounts",
+  },
+
+  {
+    key: "my-staking",
+    label: "My Staking",
+    icon: HandCoins,
+    href: "/my-staking",
   },
   // {
   //   key: "positions",
