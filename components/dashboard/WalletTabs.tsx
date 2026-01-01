@@ -1,5 +1,6 @@
 "use client";
 
+import type { PriceDir } from "@/hooks/usePriceFlashMap";
 import { useState } from "react";
 import LiveAccountWrapper from "../accounts/LiveAccountWrapper";
 import AiAccountsPage from "../ai-accounts/AiAccountPage";
@@ -8,7 +9,19 @@ import CryptoTabContent from "./CryptoTabContent";
 
 type TabKey = "crypto" | "account" | "activities";
 
-export default function WalletTabs() {
+// ✅ Dashboard header এ পাঠানোর জন্য snapshot টাইপ
+export type PortfolioSnapshot = {
+  total: number;
+  dir: PriceDir;
+  flash: boolean;
+  loading: boolean;
+};
+
+export default function WalletTabs({
+  onPortfolioChange,
+}: {
+  onPortfolioChange?: (snap: PortfolioSnapshot) => void;
+}) {
   const [activeTab, setActiveTab] = useState<TabKey>("crypto");
 
   return (
@@ -49,7 +62,11 @@ export default function WalletTabs() {
 
       {/* Tabs Content */}
       <div className="mt-4">
-        {activeTab === "crypto" && <CryptoTabContent />}
+        {/* ✅ ডিজাইন একই রেখে CryptoTabContent সবসময় mounted রাখা হলো */}
+        <div className={activeTab === "crypto" ? "block" : "hidden"}>
+          <CryptoTabContent onPortfolioChange={onPortfolioChange} />
+        </div>
+
         {activeTab === "account" && <AccountTabContent />}
         {activeTab === "activities" && <Activities />}
       </div>

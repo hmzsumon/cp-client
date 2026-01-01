@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
 
 import {
   useGetStakingPlansQuery,
@@ -23,6 +22,9 @@ type EarnAsset = {
   iconSrc?: string;
 };
 
+const MIN_AMOUNT = 0.00001;
+const MAX_DECIMALS = 8;
+
 const toNumber = (v: string | null, fallback = 0) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -34,9 +36,36 @@ const termIdToDays = (id: string) => {
   return m ? Number(m[1]) : 1;
 };
 
+// ✅ typing-friendly sanitize (NO auto clamp, NO Number() stringify)
+const sanitizeAmountInput = (raw: string) => {
+  let s = String(raw ?? "");
+
+  // comma -> dot
+  s = s.replace(/,/g, ".");
+
+  // keep only digits + dot
+  s = s.replace(/[^\d.]/g, "");
+
+  // if starts with dot => "0."
+  if (s.startsWith(".")) s = "0" + s;
+
+  // keep only first dot
+  const firstDot = s.indexOf(".");
+  if (firstDot !== -1) {
+    const before = s.slice(0, firstDot + 1);
+    const after = s.slice(firstDot + 1).replace(/\./g, "");
+    s = before + after;
+
+    // limit decimals
+    const [i, d = ""] = s.split(".");
+    s = `${i}.${d.slice(0, MAX_DECIMALS)}`;
+  }
+
+  return s;
+};
+
 const StakingEarnScreen = () => {
   const router = useRouter();
-  const dispatch = useDispatch();
   const searchParams = useSearchParams();
 
   const asset: EarnAsset = useMemo(() => {
@@ -48,14 +77,12 @@ const StakingEarnScreen = () => {
     return { symbol, name, balance, iconSrc };
   }, [searchParams]);
 
-  // ✅ load plans from backend
   const {
     data: plansData,
     isLoading: plansLoading,
     error: plansError,
   } = useGetStakingPlansQuery();
 
-  // plans fetch error toast
   useEffect(() => {
     if (plansError) {
       const msg =
@@ -66,7 +93,6 @@ const StakingEarnScreen = () => {
     }
   }, [plansError]);
 
-  // ✅ build terms from API (fallback: static)
   const terms: TermOption[] = useMemo(() => {
     const apiPlans = plansData?.items ?? [];
     if (apiPlans.length > 0) {
@@ -74,7 +100,7 @@ const StakingEarnScreen = () => {
         id: `${p.termDays}d`,
         labelTop: `${p.termDays} ${p.termDays === 1 ? "Day" : "Days"}`,
         labelBottom: "Daily",
-        apr: Number(p.dailyProfitPercent), // এখানে apr মানে totalProfitPercent (আপনার আগের মতোই)
+        apr: Number(p.dailyProfitPercent),
       }));
     }
 
@@ -90,9 +116,8 @@ const StakingEarnScreen = () => {
   }, [plansData?.items]);
 
   const [selectedTermId, setSelectedTermId] = useState<string>("1d");
-  const [amount, setAmount] = useState<string>("");
+  const [amount, setAmount] = useState<string>(""); // ✅ keep as string
 
-  // ✅ when terms load, set first term as default if current not present
   useEffect(() => {
     if (terms.length === 0) return;
     const exists = terms.some((t) => t.id === selectedTermId);
@@ -101,24 +126,24 @@ const StakingEarnScreen = () => {
 
   const selectedTerm = terms.find((t) => t.id === selectedTermId) ?? terms[0];
 
-  // UI helper (২য় tier একটু কম)
   const tierAprs = useMemo(() => {
     const base = selectedTerm?.apr ?? 0;
     const second = Math.max(0, +(base - 0.1).toFixed(2));
     return { tier1: base, tier2: second };
   }, [selectedTerm?.apr]);
 
-  const amountNum = Number(amount);
-  const minAmount = 1;
   const maxBalance = asset.balance;
 
-  const amountValid =
-    amount.trim().length > 0 &&
-    Number.isFinite(amountNum) &&
-    amountNum >= minAmount &&
-    amountNum <= maxBalance;
+  const amountNum = Number(amount);
+  const isNumeric = amount.trim().length > 0 && Number.isFinite(amountNum);
 
-  const canConfirm = amountValid && maxBalance >= minAmount;
+  const isBelowMin = isNumeric && amountNum > 0 && amountNum < MIN_AMOUNT;
+  const isAboveMax = isNumeric && amountNum > maxBalance;
+
+  const amountValid =
+    isNumeric && amountNum >= MIN_AMOUNT && amountNum <= maxBalance;
+
+  const canConfirm = amountValid && maxBalance >= MIN_AMOUNT;
 
   const availText = `Available: ${maxBalance.toLocaleString(undefined, {
     maximumFractionDigits: 8,
@@ -127,14 +152,42 @@ const StakingEarnScreen = () => {
   const [subscribeStaking, { isLoading: subscribing }] =
     useSubscribeStakingMutation();
 
+  const onAmountChange = (v: string) => {
+    // ✅ only sanitize characters; DO NOT clamp here
+    setAmount(sanitizeAmountInput(v));
+  };
+
+  const onAmountBlur = () => {
+    // ✅ clamp ONLY when leaving input
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0 && n < MIN_AMOUNT) {
+      setAmount(String(MIN_AMOUNT));
+    }
+  };
+
   const onConfirm = async () => {
-    if (!canConfirm) return;
+    if (!amount.trim()) return;
+
+    const n = Number(amount);
+    if (!Number.isFinite(n)) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    if (n < MIN_AMOUNT) {
+      toast.error(`Minimum amount is ${MIN_AMOUNT}`);
+      setAmount(String(MIN_AMOUNT));
+      return;
+    }
+    if (n > maxBalance) {
+      toast.error("Insufficient balance");
+      return;
+    }
 
     const termDays = termIdToDays(selectedTermId);
 
     const payload = {
-      symbol: asset.symbol, // backend normalize করবে (BTC => BTCUSDT)
-      amount: Number(amountNum),
+      symbol: asset.symbol,
+      amount: Number(n),
       termDays,
       iconUrl: asset.iconSrc,
     };
@@ -148,8 +201,6 @@ const StakingEarnScreen = () => {
       });
 
       setAmount("");
-
-      // ✅ redirect
       router.push("/my-staking");
     } catch {
       // toast already handled
@@ -181,18 +232,32 @@ const StakingEarnScreen = () => {
       <div className="px-2 mt-3">
         <AmountSection
           amount={amount}
-          onAmountChange={setAmount}
+          onAmountChange={onAmountChange}
           assetSymbol={asset.symbol}
           balance={maxBalance}
-          minAmount={1}
-          minText="Minimum 1"
+          minAmount={MIN_AMOUNT}
+          minText={`Minimum ${MIN_AMOUNT}`}
           availableText={availText}
-          onMax={() => setAmount(String(maxBalance))}
+          onMax={() =>
+            setAmount(String(Number(maxBalance.toFixed(MAX_DECIMALS))))
+          }
         />
 
-        {!amountValid && amount.trim().length > 0 && (
+        {amount.trim().length > 0 && !isNumeric && (
           <div className="mt-2 text-xs text-red-400">
-            Amount must be between {minAmount} and {maxBalance}.
+            Please enter a valid number.
+          </div>
+        )}
+
+        {isBelowMin && (
+          <div className="mt-2 text-xs text-red-400">
+            Minimum amount is {MIN_AMOUNT}.
+          </div>
+        )}
+
+        {isAboveMax && (
+          <div className="mt-2 text-xs text-red-400">
+            Amount cannot exceed {maxBalance}.
           </div>
         )}
       </div>

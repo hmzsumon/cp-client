@@ -15,7 +15,7 @@ import {
   useGetMyStakingSummaryQuery,
 } from "@/redux/features/staking-earn/stakingEarnApi";
 
-import { useMiniTickerMap } from "@/hooks/useMiniTickerMap"; // আপনার existing hook
+import { useMiniTickerMap } from "@/hooks/useMiniTickerMap"; // existing hook
 
 const fmt = (n: number, max = 8) =>
   Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: max });
@@ -39,7 +39,7 @@ function toUsdtPair(symbol?: string, asset?: string) {
 
   if (!s && a) s = a;
 
-  // XRPUSD -> XRPUSDT (important)
+  // XRPUSD -> XRPUSDT
   if (s.endsWith("USD")) s = s.replace(/USD$/, "USDT");
 
   // BTC -> BTCUSDT
@@ -82,8 +82,74 @@ export default function MyStakingScreen() {
     return Number(prices[pair] || 0);
   };
 
-  // ✅ LIVE totals in USDT
+  // ✅ Earned এর জন্য price snapshot (লাইভ price change এ আর আপডেট হবে না)
+  const [earnedPriceSnap, setEarnedPriceSnap] = useState<
+    Record<string, number>
+  >({});
+  const lastSummaryHashRef = useRef<string>("");
+
+  const summaryHash = useMemo(() => {
+    return (summaries as any[])
+      .map(
+        (s) =>
+          `${toUsdtPair(s?.symbol, s?.asset)}:${Number(
+            s?.totalProfitQty || 0
+          )}:${Number(s?.activePrincipalQty || 0)}:${Number(
+            s?.activeCount || 0
+          )}:${String(s?.nextMaturityAt || "")}`
+      )
+      .join("|");
+  }, [summaries]);
+
+  useEffect(() => {
+    // 1) summaryData বদলালে snapshot rebuild (একবার)
+    // 2) summary unchanged থাকলেও snapshot-এ যেসব pair 0 ছিল, পরে price আসলে সেটাও একবার fill করবে
+    const pairs = new Set<string>();
+    for (const s of summaries as any[]) {
+      const pair = toUsdtPair(s?.symbol, s?.asset);
+      if (pair) pairs.add(pair);
+    }
+
+    const hashChanged = lastSummaryHashRef.current !== summaryHash;
+
+    // build new snapshot if hash changed
+    if (hashChanged) {
+      const next: Record<string, number> = {};
+      for (const p of Array.from(pairs)) {
+        next[p] = p === "USDT" ? 1 : Number(priceOfPair(p) || 0);
+      }
+      setEarnedPriceSnap(next);
+      lastSummaryHashRef.current = summaryHash;
+      return;
+    }
+
+    // fill missing prices once (if previously 0 but now available)
+    let needsPatch = false;
+    const patched: Record<string, number> = { ...earnedPriceSnap };
+
+    for (const p of Array.from(pairs)) {
+      if (p === "USDT") {
+        if (patched[p] !== 1) {
+          patched[p] = 1;
+          needsPatch = true;
+        }
+        continue;
+      }
+      const curSnap = Number(patched[p] || 0);
+      const live = Number(priceOfPair(p) || 0);
+      if (curSnap <= 0 && live > 0) {
+        patched[p] = live; // ✅ one-time set
+        needsPatch = true;
+      }
+    }
+
+    if (needsPatch) setEarnedPriceSnap(patched);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summaryHash, prices, summaries]);
+
+  // ✅ totals
   const totals = useMemo(() => {
+    // Total Locked -> LIVE (price change হলে আপডেট হবে)
     const totalLockedUSDT = (summaries as any[]).reduce((acc, s) => {
       const qty = Number(s?.activePrincipalQty || 0);
       const pair = toUsdtPair(s?.symbol, s?.asset);
@@ -91,12 +157,18 @@ export default function MyStakingScreen() {
       return acc + qty * (px || 0);
     }, 0);
 
+    // Earned -> NOT LIVE (snapshot price ব্যবহার করবে)
     const totalProfitUSDT = (summaries as any[]).reduce((acc, s) => {
       const qty = Number(s?.totalProfitQty || 0);
       const pair = toUsdtPair(s?.symbol, s?.asset);
-      const px = priceOfPair(pair);
-      return acc + qty * (px || 0);
+      const px = pair === "USDT" ? 1 : Number(earnedPriceSnap[pair] ?? 0) || 0;
+      return acc + qty * px;
     }, 0);
+
+    console.log("MyStakingScreen: totals calc", {
+      totalLockedUSDT,
+      totalProfitUSDT,
+    });
 
     const activeCount = (summaries as any[]).reduce(
       (acc, s) => acc + Number(s?.activeCount || 0),
@@ -109,16 +181,12 @@ export default function MyStakingScreen() {
       .sort()[0];
 
     return { totalLockedUSDT, totalProfitUSDT, activeCount, nextMaturity };
-  }, [summaries, prices]);
+  }, [summaries, prices, earnedPriceSnap]);
 
-  // ✅ StrictMode-safe flash state (useEffect)
+  // ✅ StrictMode-safe flash only for Total Locked (Earned এর জন্য না)
   const [lockedTone, setLockedTone] = useState<SummaryTone>("flat");
   const [lockedFlash, setLockedFlash] = useState(false);
   const prevLockedRef = useRef<number | null>(null);
-
-  const [earnedTone, setEarnedTone] = useState<SummaryTone>("flat");
-  const [earnedFlash, setEarnedFlash] = useState(false);
-  const prevEarnedRef = useRef<number | null>(null);
 
   useEffect(() => {
     const cur = totals.totalLockedUSDT;
@@ -137,23 +205,6 @@ export default function MyStakingScreen() {
     prevLockedRef.current = cur;
   }, [totals.totalLockedUSDT]);
 
-  useEffect(() => {
-    const cur = totals.totalProfitUSDT;
-    if (prevEarnedRef.current == null) {
-      prevEarnedRef.current = cur;
-      return;
-    }
-    const diff = cur - prevEarnedRef.current;
-    if (diff !== 0) {
-      setEarnedTone(toneFromDiff(diff));
-      setEarnedFlash(true);
-      const t = setTimeout(() => setEarnedFlash(false), 700);
-      prevEarnedRef.current = cur;
-      return () => clearTimeout(t);
-    }
-    prevEarnedRef.current = cur;
-  }, [totals.totalProfitUSDT]);
-
   // ✅ cards
   const cards: SummaryCardItem[] = useMemo(
     () => [
@@ -171,11 +222,12 @@ export default function MyStakingScreen() {
         tone: "flat",
       },
       {
+        // ✅ Earned: NO live-color, NO flash (always flat)
         title: "Earned",
         value: `${fmt(totals.totalProfitUSDT, 2)} USDT`,
         icon: <TrendingUp className="h-4 w-4" />,
-        tone: earnedTone,
-        flash: earnedFlash,
+        tone: "flat",
+        flash: false,
       },
       {
         title: "Next Maturity",
@@ -186,7 +238,7 @@ export default function MyStakingScreen() {
         tone: "flat",
       },
     ],
-    [totals, lockedTone, lockedFlash, earnedTone, earnedFlash]
+    [totals, lockedTone, lockedFlash]
   );
 
   // ✅ list items
@@ -198,7 +250,7 @@ export default function MyStakingScreen() {
         totalDays > 0 ? Number(s.totalProfitPercent) / totalDays : 0;
       const progress = totalDays > 0 ? Math.min(1, paidDays / totalDays) : 0;
 
-      const fullSymbol = toUsdtPair(s.symbol, s.asset); // normalize
+      const fullSymbol = toUsdtPair(s.symbol, s.asset);
 
       return {
         id: s._id,

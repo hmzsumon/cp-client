@@ -35,7 +35,7 @@ const KpiTile: React.FC<Props> = ({ tone, title, value, icon }) => {
       </div>
       <div>
         <p className="text-sm text-neutral-300">{title}</p>
-        <p className="mt-1 text-2xl font-bold text-neutral-100">{value}</p>
+        <p className="mt-1 text-xl font-bold text-neutral-100">{value}</p>
       </div>
     </div>
   );

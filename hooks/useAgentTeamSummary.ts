@@ -16,6 +16,8 @@ export type TeamLevel = {
   inactiveUsers: string[];
   aiTradeCommission: number;
   liveTradeCommission: number;
+  usersCount: number;
+  activeUsers: number;
 };
 
 export type TeamSummary = {

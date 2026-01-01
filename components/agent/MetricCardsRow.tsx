@@ -30,7 +30,6 @@ const MetricCardsRow: React.FC<{
         <MetricCard label="Withdrawal" amount={V(withdraw)} />
         <MetricCard label="Total Ai trade" amount={V(netDeposit)} />
         <MetricCard label="Ai trade ROI" amount={V(aiTradeRoi)} />
-        <MetricCard label="Volume" amount={V(volume, "")} suffix="(USDT)" />
       </div>
     </section>
   );

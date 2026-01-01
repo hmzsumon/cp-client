@@ -42,7 +42,8 @@ const AgentDashboardPage: React.FC = () => {
 
         <KpiGrid
           loading={loading}
-          countOfReferring={String(levels[0]?.inactiveUsers) ?? 0}
+          countOfReferring={String(levels[0]?.users?.length) ?? 0}
+          activeUsers={String(levels[0]?.activeUsers) ?? 0}
           totalReferralIncome={kpisText.totalReferralIncome}
           level1AiTradeBalance={String(levels[0]?.aiTradeBalance) ?? 0}
           level1LiveTradeBalance={String(levels[0]?.liveTradeBalance) ?? 0}

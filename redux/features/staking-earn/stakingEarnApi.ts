@@ -135,7 +135,7 @@ export const stakingEarnApi = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["StakingSubs", "StakingSummary", "StakingLogs"],
+      invalidatesTags: ["User", "StakingSubs", "StakingSummary", "StakingLogs"],
     }),
 
     // ✅ GET my subscriptions
@@ -182,6 +182,7 @@ export const stakingEarnApi = apiSlice.injectEndpoints({
         method: "POST",
       }),
       invalidatesTags: (_r, _e, id) => [
+        "User",
         "StakingSubs",
         "StakingSummary",
         { type: "StakingLogs", id },
