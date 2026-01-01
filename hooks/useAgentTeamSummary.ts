@@ -154,6 +154,7 @@ export function useAgentTeamSummary() {
     totalReferralIncome: fmt(kpis.totalReferralIncome),
     level1AiTradeBalance: fmt(kpis.level1AiTradeBalance),
     level1LiveTradeBalance: fmt(kpis.level1LiveTradeBalance),
+    activeUsers: String(team?.totalTeamMember ?? 0),
   };
 
   return {

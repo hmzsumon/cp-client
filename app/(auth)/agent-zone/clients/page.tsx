@@ -30,6 +30,7 @@ const MyClientsPage: React.FC = () => {
           totalReferralIncome={kpisText.totalReferralIncome}
           level1AiTradeBalance={kpisText.level1AiTradeBalance}
           level1LiveTradeBalance={kpisText.level1LiveTradeBalance}
+          activeUsers={kpisText.activeUsers}
         />
 
         <section className="rounded-lg border border-neutral-800 bg-neutral-950 p-4">
