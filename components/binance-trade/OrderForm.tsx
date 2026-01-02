@@ -218,7 +218,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             onChange={(e) => setPrice(e.target.value)}
             className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
             placeholder="0.00"
-            disabled={orderType === "market"} // ✅ market এ ইনপুট বন্ধ, limit এ খোলা
+            disabled={true} // ✅ market এ ইনপুট বন্ধ, limit এ খোলা
           />
           <button
             type="button"
