@@ -27,7 +27,7 @@ const SummaryPanel = ({ assetSymbol, tier1Apr, tier2Apr }: Props) => {
             <span className="text-sm">0-0.2 {assetSymbol}</span>
           </div>
           <div className="text-sm text-white/80">
-            APR{" "}
+            Daily{" "}
             <span className="font-semibold">
               {tier1Apr.toFixed(2).replace(/\.00$/, "")}%
             </span>
@@ -40,16 +40,13 @@ const SummaryPanel = ({ assetSymbol, tier1Apr, tier2Apr }: Props) => {
             <span className="text-sm">&gt;0.2 {assetSymbol}</span>
           </div>
           <div className="text-sm text-white/60">
-            APR{" "}
-            <span className="font-semibold">
-              {tier2Apr.toFixed(2).replace(/\.00$/, "")}%
-            </span>
+            Daily <span className="font-semibold">60% & 40%</span>
           </div>
         </div>
 
         <p className="pt-2 text-xs text-white/40 leading-relaxed">
-          *APR does not represent actual or predicted returns in fiat currency.
-          Please refer to the Product Rules for reward mechanisms.
+          *Daily does not represent actual or predicted returns in fiat
+          currency. Please refer to the Product Rules for reward mechanisms.
         </p>
       </div>
     </div>
