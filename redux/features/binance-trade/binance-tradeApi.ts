@@ -103,14 +103,17 @@ export const binanceTradeApi = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["User"],
+      invalidatesTags: ["User","SpotWallets"],
     }),
+
 
     // 👉 Spot balances query
     getSpotBalances: builder.query<SpotWallet[], void>({
       query: () => "/binance-trade/balances",
       transformResponse: (res: { success: boolean; items: SpotWallet[] }) =>
         res.items,
+
+      providesTags: ["SpotWallets"],
     }),
 
     // ✅ Trading pairs list (DB থেকে)
