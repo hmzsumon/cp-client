@@ -9,6 +9,7 @@ export type StakingPlan = {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+  userSharePercent?: number;
 };
 
 export type StakingSubscription = {

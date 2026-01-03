@@ -31,6 +31,21 @@ export default function CryptoAssetCard({
     maximumFractionDigits: 8,
   });
 
+  const tradePair = (() => {
+    const n = (name || "").toUpperCase();
+    // যদি name আসলে pair symbol হয় (e.g. XRPUSDT) তাহলে এটাকেই নিন
+    if (/^[A-Z0-9]+USDT$/.test(n)) return n;
+
+    const s = symbol.toUpperCase();
+    // USDT কার্ড হলে ডিফল্টে BTCUSDT (আপনি চাইলে বদলাতে পারেন)
+    if (s === "USDT") return "BTCUSDT";
+
+    // নাহলে BASE + USDT
+    return `${s}USDT`;
+  })();
+
+  const tradeHref = `/trade?symbol=${encodeURIComponent(tradePair)}`;
+
   const displayQuote =
     typeof quoteValue === "number"
       ? `${quoteValue.toLocaleString(undefined, {
@@ -110,7 +125,7 @@ export default function CryptoAssetCard({
             </button>
           </Link>
 
-          <Link href="/trade">
+          <Link href={tradeHref}>
             <button
               onClick={onTrade}
               className="rounded-md bg-[#374151] px-4 py-1 text-xs font-medium text-zinc-100 hover:bg-[#4B5563] transition-colors"

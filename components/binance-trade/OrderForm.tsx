@@ -6,29 +6,21 @@ import {
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
-import type { OrderType, Side } from "./TradeLayout";
+import type { Side } from "./TradeLayout";
 
 // Amount থেকে ফি = amount * 0.000075
-// Amount = 1000 => 0.075
 const FEE_RATE = 0.000075; // 0.0075%
 const MIN_NOTIONAL = 5; // ✅ Minimum total (USDT)
 
 interface OrderFormProps {
   side: Side;
-  orderType: OrderType;
   symbol: string;
   lastPrice: string | null;
 }
 
-const OrderForm: React.FC<OrderFormProps> = ({
-  side,
-  orderType,
-  symbol,
-  lastPrice,
-}) => {
+const OrderForm: React.FC<OrderFormProps> = ({ side, symbol, lastPrice }) => {
   const { user } = useSelector((state: any) => state.auth);
 
-  const [price, setPrice] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [slider, setSlider] = useState<number>(0);
 
@@ -58,34 +50,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
   // symbol change হলে ফর্ম রিসেট
   useEffect(() => {
-    setPrice("");
     setAmount("");
     setSlider(0);
   }, [symbol]);
 
-  // প্রথমে price এ lastPrice বসাই
-  useEffect(() => {
-    if (!price && lastPrice) {
-      setPrice(lastPrice);
-    }
-  }, [lastPrice, price]);
-
-  const handleBbo = (): void => {
-    if (lastPrice) setPrice(lastPrice);
-  };
-
-  // backend এ কেবল "market" | "limit" সাপোর্ট করলে:
-  const backendOrderType: "market" | "limit" =
-    orderType === "market" ? "market" : "limit";
-
-  const priceNum = parseFloat(price || "0") || 0;
   const amountNum = parseFloat(amount || "0") || 0;
 
-  // ✅ market হলে total/slider হিসাব করার জন্য lastPrice কে effective price ধরা
-  const effectivePriceNum =
-    backendOrderType === "market"
-      ? parseFloat(lastPrice || price || "0") || 0
-      : priceNum;
+  // ✅ market fixed => effective price only lastPrice
+  const effectivePriceNum = parseFloat(lastPrice || "0") || 0;
 
   const totalNum =
     effectivePriceNum && amountNum ? effectivePriceNum * amountNum : 0;
@@ -108,10 +80,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
     const pct = value / 100;
 
     if (isBuy) {
-      const p =
-        backendOrderType === "market"
-          ? parseFloat(lastPrice || price || "0") || 0
-          : parseFloat(price || "0") || 0;
+      const p = parseFloat(lastPrice || "0") || 0;
 
       if (!p) {
         setAmount("");
@@ -147,11 +116,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
       return;
     }
 
-    if (backendOrderType === "limit" && (!priceNum || priceNum <= 0)) {
-      toast.error("Enter valid price for limit order");
-      return;
-    }
-
     // ✅ Minimum total check
     if (totalNum < MIN_NOTIONAL) {
       toast.error(`Minimum order size is ${MIN_NOTIONAL} ${quoteAsset}`);
@@ -168,15 +132,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
       const res = await placeOrder({
         symbol: normalizedSymbol, // "BTCUSDT"
         side, // "buy" | "sell"
-        orderType: backendOrderType, // backend friendly
+        orderType: "market", // ✅ fixed
         quantity: amountNum, // base asset amount
-        price: backendOrderType === "limit" ? priceNum : undefined,
+        price: effectivePriceNum, // ✅ fixed
       }).unwrap();
 
-      const executedPrice =
-        backendOrderType === "market"
-          ? Number(res?.order?.price ?? effectivePriceNum)
-          : priceNum;
+      const executedPrice = Number(res?.order?.price ?? effectivePriceNum);
 
       toast.success(
         `${side === "buy" ? "Bought" : "Sold"} ${amountNum.toFixed(
@@ -187,9 +148,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       // ফর্ম রিসেট
       setAmount("");
       setSlider(0);
-      if (backendOrderType !== "limit") {
-        setPrice(""); // market হলে backend/lastPrice ব্যবহার হবে
-      }
+
       console.log("order result:", res);
     } catch (err: any) {
       const msg =
@@ -200,34 +159,25 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 text-xs text-slate-200">
-      {/* Price */}
+      {/* Price (Read-only for market) */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-slate-400">
             Price ({quoteAsset})
           </span>
           <span className="rounded-full bg-slate-800 px-2 py-[2px] text-[10px] uppercase text-slate-400">
-            {orderType}
+            market
           </span>
         </div>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            step="0.00000001"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
-            placeholder="0.00"
-            disabled={true} // ✅ market এ ইনপুট বন্ধ, limit এ খোলা
-          />
-          <button
-            type="button"
-            onClick={handleBbo}
-            className="shrink-0 rounded-md bg-slate-800 px-3 text-[10px] font-medium text-slate-100 hover:bg-slate-700"
-          >
-            BBO
-          </button>
-        </div>
+
+        <input
+          type="number"
+          step="0.00000001"
+          value={lastPrice ?? ""}
+          readOnly
+          className="w-full cursor-default rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500"
+          placeholder="0.00"
+        />
       </div>
 
       {/* Amount (BASE asset) */}
@@ -307,12 +257,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
             </span>
           )}
         </div>
+
         <div className="flex items-center justify-between">
           <span>Max {isBuy ? "Buy" : "Sell"}</span>
           <span className="text-slate-200">
             {maxBase.toFixed(6)} {baseAsset}
           </span>
         </div>
+
         <div className="flex items-center justify-between">
           <span>Est. Fee</span>
           <span className="text-slate-200">

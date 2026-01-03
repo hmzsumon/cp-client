@@ -7,6 +7,8 @@ export type TermOption = {
   labelTop: string;
   labelBottom?: string;
   apr: number;
+  apr2?: number;
+  userSharePercent?: number;
 };
 
 type Props = {

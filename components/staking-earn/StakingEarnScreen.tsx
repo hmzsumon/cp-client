@@ -101,6 +101,7 @@ const StakingEarnScreen = () => {
         labelTop: `${p.termDays} ${p.termDays === 1 ? "Day" : "Days"}`,
         labelBottom: "Daily",
         apr: Number(p.dailyProfitPercent),
+        userSharePercent: p.userSharePercent,
       }));
     }
 
@@ -269,8 +270,9 @@ const StakingEarnScreen = () => {
       <div className="px-2 mt-4 pb-28">
         <SummaryPanel
           assetSymbol={asset.symbol}
-          tier1Apr={tierAprs.tier1}
-          tier2Apr={tierAprs.tier2}
+          amount={Number.isFinite(amountNum) ? amountNum : 0}
+          dailyApr={selectedTerm?.apr ?? 0}
+          userSharePercent={selectedTerm?.userSharePercent ?? 1}
         />
       </div>
 

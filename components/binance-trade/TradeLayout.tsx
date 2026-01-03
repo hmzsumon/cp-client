@@ -2,7 +2,8 @@
 "use client";
 
 import { useBinanceTicker } from "@/hooks/useBinanceTicker";
-import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import MarketList from "./MarketList";
 import OrderBook from "./OrderBook";
 import OrderForm from "./OrderForm";
@@ -12,10 +13,21 @@ export type Side = "buy" | "sell";
 export type OrderType = "limit" | "market" | "stop-limit";
 
 const TradeLayout: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [side, setSide] = useState<Side>("buy");
-  const [orderType, setOrderType] = useState<OrderType>("limit");
+  const [orderType, setOrderType] = useState<OrderType>("market");
   const [symbol, setSymbol] = useState<string>("BTCUSDT");
   const [pairDrawerOpen, setPairDrawerOpen] = useState(false);
+
+  // ✅ URL থেকে preselect symbol
+  const qSymbol = searchParams.get("symbol");
+
+  useEffect(() => {
+    if (!qSymbol) return;
+    setSymbol(qSymbol.toUpperCase());
+  }, [qSymbol]);
 
   const lastPrice = useBinanceTicker(symbol);
   const prettySymbol = symbol.endsWith("USDT")
@@ -91,30 +103,23 @@ const TradeLayout: React.FC = () => {
 
             {/* Order type tabs */}
             <div className="mb-3 flex gap-2 text-[11px]">
-              {(["limit", "market", "stop-limit"] as OrderType[]).map(
-                (type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setOrderType(type)}
-                    className={`flex-1 rounded-full px-2 py-1 capitalize transition ${
-                      orderType === type
-                        ? "bg-slate-800 text-yellow-400"
-                        : "bg-slate-900 text-slate-400 hover:bg-slate-800"
-                    }`}
-                  >
-                    {type}
-                  </button>
-                )
-              )}
+              {(["market"] as OrderType[]).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setOrderType(type)}
+                  className={`flex-1 rounded-full px-2 py-1 capitalize transition ${
+                    orderType === type
+                      ? "bg-slate-800 text-yellow-400"
+                      : "bg-slate-900 text-slate-400 hover:bg-slate-800"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
             </div>
 
-            <OrderForm
-              side={side}
-              orderType={orderType}
-              symbol={symbol}
-              lastPrice={lastPrice}
-            />
+            <OrderForm side={side} symbol={symbol} lastPrice={lastPrice} />
           </div>
 
           {/* RIGHT SIDE */}
@@ -129,11 +134,14 @@ const TradeLayout: React.FC = () => {
       <PairDrawer
         open={pairDrawerOpen}
         selectedSymbol={symbol}
-        side={side} 
+        side={side}
         onClose={() => setPairDrawerOpen(false)}
         onSelectSymbol={(newSymbol) => {
           setSymbol(newSymbol);
           setPairDrawerOpen(false);
+
+          // ✅ (optional but nice) drawer থেকে select করলে URL-ও আপডেট
+          router.replace(`/trade?symbol=${encodeURIComponent(newSymbol)}`);
         }}
       />
     </>
